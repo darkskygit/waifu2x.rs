@@ -80,7 +80,7 @@ public:
 			this->noise = noise;
 		}
 		if (scale >= 1) {
-			this->noise = scale;
+			this->scale = scale;
 		}
 		if (tilesize >= 32) {
 			this->tilesize = tilesize;
@@ -623,9 +623,11 @@ int main(int argc, char** argv)
 #if WIN32
 	CoInitialize(0);
 #endif
+	fprintf(stderr, "noise: %d, scale: %d, tilesize: %d\n", noise, scale, tilesize);
 	auto config = waifu2x_config(noise, scale, tilesize, model);
 	auto image = new waifu2x_image(&config);
 	auto processer = new waifu2x(gpuid);
+	fprintf(stderr, "noise: %d, scale: %d, tilesize: %d, prepadding: %d\n", config.noise, config.scale, config.tilesize, config.prepadding);
 	processer->load_models(config.read_param(), config.read_model());
 	processer->set_model_blob(config.input_blob(), config.extract_blob());
 	image->decode(imagepath);
