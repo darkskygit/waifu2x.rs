@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <vector>
 
-#if WIN32
+#ifdef WIN32
 // image decoder and encoder with wic
 #include "wic_image.h"
 #else // WIN32
@@ -117,10 +117,10 @@ public:
 #else
 	void encode(const char* output) {
 #endif
-#if WIN32
+#ifdef WIN32
 		int ret = wic_encode_image(output, this->buffer.w, this->buffer.h, 3, this->buffer.data);
 #else
-		int ret = stbi_write_png(outputpngpath, outrgb.w, outrgb.h, 3, outrgb.data, 0);
+		int ret = stbi_write_png(output, this->buffer.w, outrgb.h, 3, outrgb.data, 0);
 #endif
 		if (ret == 0)
 		{
@@ -133,10 +133,10 @@ public:
 #else
 	void decode(const char* input) {
 #endif
-#if WIN32
+#ifdef WIN32
 		this->data = wic_decode_image(input, &this->w, &this->h, &this->c);
 #else
-		this->data = stbi_load(imagepath, &this->w, &this->h, &this->c, 3);
+		this->data = stbi_load(input, &this->w, &this->h, &this->c, 3);
 #endif 
 		if (!this->data)
 		{
@@ -236,7 +236,7 @@ private:
 	void init_proc() {
 		// initialize preprocess and postprocess pipeline
 		vector<ncnn::vk_specialization_type> specializations(1);
-#if WIN32
+#ifdef WIN32
 		specializations[0].i = 1;
 #else
 		specializations[0].i = 0;
@@ -281,7 +281,7 @@ public:
 			}
 			else
 			{
-#if WIN32
+#ifdef WIN32
 				in = ncnn::Mat::from_pixels(image->data + in_tile_y0 * image->w * 3, ncnn::Mat::PIXEL_BGR2RGB, image->w, (in_tile_y1 - in_tile_y0));
 #else
 				in = ncnn::Mat::from_pixels(image->data + in_tile_y0 * image->w * 3, ncnn::Mat::PIXEL_RGB, image->w, (in_tile_y1 - in_tile_y0));
@@ -409,7 +409,7 @@ public:
 				ncnn::Mat out;
 				out.create_like(out_gpu, this->net.opt.blob_allocator);
 				out_gpu.download(out);
-#if WIN32
+#ifdef WIN32
 				out.to_pixels((unsigned char*)image->buffer.data + yi * image->scale * image->TILE_SIZE_Y * image->w * image->scale * 3, ncnn::Mat::PIXEL_RGB2BGR);
 #else
 				out.to_pixels((unsigned char*)image->buffer.data + yi * image->scale * image->TILE_SIZE_Y * image->w * image->scale * 3, ncnn::Mat::PIXEL_RGB);
@@ -419,7 +419,7 @@ public:
 	}
 };
 
-#if WIN32
+#ifdef WIN32
 #include <wchar.h>
 static wchar_t* optarg = NULL;
 static int optind = 1;
@@ -465,13 +465,13 @@ static void print_usage()
 	fprintf(stderr, "  -g gpu-id        gpu device to use (default=0)\n");
 }
 
-#if WIN32
+#ifdef WIN32
 int wmain(int argc, wchar_t** argv)
 #else
 int main(int argc, char** argv)
 #endif
 {
-#if WIN32
+#ifdef WIN32
 	const wchar_t* imagepath = 0;
 	const wchar_t* outputpngpath = 0;
 	int noise = 0;
@@ -565,7 +565,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-#if WIN32
+#ifdef WIN32
 	CoInitialize(0);
 #endif
 	auto config = waifu2x_config(noise, scale, tilesize, true);
