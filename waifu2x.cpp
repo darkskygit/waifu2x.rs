@@ -50,32 +50,16 @@ static const uint32_t waifu2x_postproc_int8s_spv_data[] = {
 };
 #endif
 
-#include "models.h"
+#include "models/models.h"
 
 class waifu2x_config {
 public:
-	int prepadding = 0;
 	int noise = 0;
 	int scale = 2;
 	int tilesize = 128;
-private:
-#if WIN32
-	const wchar_t* model = L"models-cunet";
-	wchar_t parampath[256];
-	wchar_t modelpath[256];
-#else // WIN32
-	const char* model = "models-cunet";
-	char parampath[256];
-	char modelpath[256];
-#endif
+	bool cunet = true;
 public:
-#ifdef WIN32
-	waifu2x_config(int noise = 0, int scale = 2, int tilesize = 400, const wchar_t* model = 0)
-		:parampath(L""), modelpath(L"") {
-#else
-	waifu2x_config(int noise = 0, int scale = 2, int tilesize = 400, const char* model = 0)
-		:parampath(""), modelpath("") {
-#endif
+	waifu2x_config(int noise = 0, int scale = 2, int tilesize = 400, bool cunet = true) {
 		if (noise >= 0) {
 			this->noise = noise;
 		}
@@ -85,53 +69,22 @@ public:
 		if (tilesize >= 32) {
 			this->tilesize = tilesize;
 		}
-		if (model) {
-			this->model = model;
-		}
-#if WIN32
-		if (wcsstr(this->model, L"models-cunet"))
-#else
-		if (strstr(this->model, "models-cunet"))
-#endif
-		{
-			if (noise == -1)
-			{
-				this->prepadding = 18;
-			}
-			else if (scale == 1)
-			{
-				this->prepadding = 28;
-			}
-			else if (scale == 2)
-			{
-				this->prepadding = 18;
-			}
-		}
-#if WIN32
-		else if (wcsstr(this->model, L"models-upconv_7_anime_style_art_rgb"))
-#else
-		else if (strstr(this->model, "models-upconv_7_anime_style_art_rgb"))
-#endif
-		{
-			this->prepadding = 7;
-		}
-		else
-		{
-			fprintf(stderr, "unknown model dir type");
-			return;
-		}
+		this->cunet = cunet;
 	}
 	const unsigned char* read_param() {
-		return get_param(this->noise, this->scale);
+		return (this->cunet ? cunet::get_param : upconv_7_anime_style_art_rgb::get_param)(this->noise, this->scale);
 	}
 	const unsigned char* read_model() {
-		return get_model(this->noise, this->scale);
+		return (this->cunet ? cunet::get_model : upconv_7_anime_style_art_rgb::get_model)(this->noise, this->scale);
 	}
 	const int input_blob() {
-		return get_input(this->noise, this->scale);
+		return (this->cunet ? cunet::get_input : upconv_7_anime_style_art_rgb::get_input)(this->noise, this->scale);
 	}
 	const int extract_blob() {
-		return get_extract(this->noise, this->scale);
+		return (this->cunet ? cunet::get_extract : upconv_7_anime_style_art_rgb::get_extract)(this->noise, this->scale);
+	}
+	const int prepadding() {
+		return (this->cunet ? cunet::get_padding : upconv_7_anime_style_art_rgb::get_padding)(this->noise, this->scale);
 	}
 };
 
@@ -145,7 +98,7 @@ public:
 	unsigned char* data;
 	ncnn::Mat buffer;
 	waifu2x_image(waifu2x_config* config = new waifu2x_config())
-		: prepadding(config->prepadding), scale(config->scale), TILE_SIZE_X(config->tilesize), TILE_SIZE_Y(config->tilesize),
+		: prepadding(config->prepadding()), scale(config->scale), TILE_SIZE_X(config->tilesize), TILE_SIZE_Y(config->tilesize),
 		w(0), h(0), c(0), prepadding_bottom(0), prepadding_right(0), xtiles(0), ytiles(0), data(0)
 	{}
 	waifu2x_image(int prepadding, int scale, int tilesize)
@@ -627,7 +580,7 @@ int main(int argc, char** argv)
 	auto config = waifu2x_config(noise, scale, tilesize, model);
 	auto image = new waifu2x_image(&config);
 	auto processer = new waifu2x(gpuid);
-	fprintf(stderr, "noise: %d, scale: %d, tilesize: %d, prepadding: %d\n", config.noise, config.scale, config.tilesize, config.prepadding);
+	fprintf(stderr, "noise: %d, scale: %d, tilesize: %d, prepadding: %d\n", config.noise, config.scale, config.tilesize, config.prepadding());
 	processer->load_models(config.read_param(), config.read_model());
 	processer->set_model_blob(config.input_blob(), config.extract_blob());
 	image->decode(imagepath);
