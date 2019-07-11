@@ -62,6 +62,7 @@ endmacro()
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # change these path to yours
+include_directories(${Vulkan_INCLUDE_DIR})
 include_directories("/home/nihui/osd/ncnn/build/install/include")
 link_directories("/home/nihui/osd/ncnn/build/install/lib")
 
