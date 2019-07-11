@@ -167,7 +167,7 @@ private:
 		this->xtiles = (this->w + this->TILE_SIZE_X - 1) / this->TILE_SIZE_X;
 		this->ytiles = (this->h + this->TILE_SIZE_Y - 1) / this->TILE_SIZE_Y;
 	}
-};
+	};
 
 class waifu2x {
 private:
@@ -477,11 +477,10 @@ int main(int argc, char** argv)
 	int noise = 0;
 	int scale = 2;
 	int tilesize = 400;
-	const wchar_t* model = 0;
 	int gpuid = 0;
 
 	wchar_t opt;
-	while ((opt = getopt(argc, argv, L"i:o:n:s:t:m:g:h")) != (wchar_t)-1)
+	while ((opt = getopt(argc, argv, L"i:o:n:s:t:g:h")) != (wchar_t)-1)
 	{
 		switch (opt)
 		{
@@ -500,9 +499,6 @@ int main(int argc, char** argv)
 		case L't':
 			tilesize = _wtoi(optarg);
 			break;
-		case L'm':
-			model = optarg;
-			break;
 		case L'g':
 			gpuid = _wtoi(optarg);
 			break;
@@ -518,11 +514,10 @@ int main(int argc, char** argv)
 	int noise = 0;
 	int scale = 2;
 	int tilesize = 400;
-	const char* model = "models-cunet";
 	int gpuid = 0;
 
 	int opt;
-	while ((opt = getopt(argc, argv, "i:o:n:s:t:m:g:h")) != -1)
+	while ((opt = getopt(argc, argv, "i:o:n:s:t:g:h")) != -1)
 	{
 		switch (opt)
 		{
@@ -540,9 +535,6 @@ int main(int argc, char** argv)
 			break;
 		case 't':
 			tilesize = atoi(optarg);
-			break;
-		case 'm':
-			model = optarg;
 			break;
 		case 'g':
 			gpuid = atoi(optarg);
@@ -576,11 +568,9 @@ int main(int argc, char** argv)
 #if WIN32
 	CoInitialize(0);
 #endif
-	fprintf(stderr, "noise: %d, scale: %d, tilesize: %d\n", noise, scale, tilesize);
-	auto config = waifu2x_config(noise, scale, tilesize, model);
+	auto config = waifu2x_config(noise, scale, tilesize, true);
 	auto image = new waifu2x_image(&config);
 	auto processer = new waifu2x(gpuid);
-	fprintf(stderr, "noise: %d, scale: %d, tilesize: %d, prepadding: %d\n", config.noise, config.scale, config.tilesize, config.prepadding());
 	processer->load_models(config.read_param(), config.read_model());
 	processer->set_model_blob(config.input_blob(), config.extract_blob());
 	image->decode(imagepath);

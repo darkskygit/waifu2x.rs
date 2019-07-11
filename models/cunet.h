@@ -137,9 +137,9 @@ namespace cunet {
 	int get_padding(int noise, int scale) {
 		switch (scale) {
 		case 1:
-			return 28
+			return 28;
 		case 2:
-			return 18
+			return 18;
 		default:
 			return 18;
 		}
