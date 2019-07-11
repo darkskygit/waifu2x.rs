@@ -50,6 +50,7 @@ static const uint32_t waifu2x_postproc_int8s_spv_data[] = {
 };
 #endif
 
+#include "models.h"
 
 class waifu2x_config {
 public:
@@ -119,72 +120,19 @@ public:
 			fprintf(stderr, "unknown model dir type");
 			return;
 		}
-
-#if WIN32
-		if (noise == -1)
-		{
-			swprintf(this->parampath, 256, L"%s/scale2.0x_model.param", this->model);
-			swprintf(this->modelpath, 256, L"%s/scale2.0x_model.bin", this->model);
-		}
-		else if (scale == 1)
-		{
-			swprintf(this->parampath, 256, L"%s/noise%d_model.param", this->model, noise);
-			swprintf(this->modelpath, 256, L"%s/noise%d_model.bin", this->model, noise);
-		}
-		else if (scale == 2)
-		{
-			swprintf(this->parampath, 256, L"%s/noise%d_scale2.0x_model.param", this->model, noise);
-			swprintf(this->modelpath, 256, L"%s/noise%d_scale2.0x_model.bin", this->model, noise);
-		}
-#else
-		if (noise == -1)
-		{
-			sprintf(this->parampath, "%s/scale2.0x_model.param", this->model);
-			sprintf(this->modelpath, "%s/scale2.0x_model.bin", this->model);
-		}
-		else if (scale == 1)
-		{
-			sprintf(this->parampath, "%s/noise%d_model.param", this->model, noise);
-			sprintf(this->modelpath, "%s/noise%d_model.bin", this->model, noise);
-		}
-		else if (scale == 2)
-		{
-			sprintf(this->parampath, "%s/noise%d_scale2.0x_model.param", this->model, noise);
-			sprintf(this->modelpath, "%s/noise%d_scale2.0x_model.bin", this->model, noise);
-		}
-#endif
 	}
-#ifdef WIN32
-	unsigned char* read_param() {
-		return read_file(this->parampath);
+	const unsigned char* read_param() {
+		return get_param(this->noise, this->scale);
 	}
-	unsigned char* read_model() {
-		return read_file(this->modelpath);
+	const unsigned char* read_model() {
+		return get_model(this->noise, this->scale);
 	}
-private:
-	unsigned char* read_file(wchar_t* path) {
-		FILE* fp = _wfopen(path, L"rb");
-		if (!fp)
-		{
-			fwprintf(stderr, L"_wfopen %s failed\n", path);
-			return nullptr;
-		}
-		fseek(fp, 0, SEEK_END);
-		auto len = _ftelli64(fp);
-		rewind(fp);
-		auto buffer = new unsigned char[len + 1];
-		fread(buffer, len, 1, fp);
-		buffer[len] = 0;
-		return buffer;
+	const int input_blob() {
+		return get_input(this->noise, this->scale);
 	}
-#else
-	char* read_param() {
-		return this->parampath;
+	const int extract_blob() {
+		return get_extract(this->noise, this->scale);
 	}
-	char* read_model() {
-		return this->modelpath;
-	}
-#endif
 };
 
 class waifu2x_image {
@@ -274,6 +222,8 @@ private:
 	ncnn::VulkanDevice* vkdev;
 	ncnn::Pipeline* preproc;
 	ncnn::Pipeline* postproc;
+	int input_blob = 0;
+	int extract_blob = 0;
 
 public:
 	waifu2x(int gpuid = 0) :vkdev(0), preproc(0), postproc(0) {
@@ -324,6 +274,10 @@ public:
 	void load_models(const unsigned char* param, const  unsigned char* model) {
 		this->net.load_param(param);
 		this->net.load_model(model);
+	}
+	void set_model_blob(const int input, const  int extract) {
+		this->input_blob = input;
+		this->extract_blob = extract;
 	}
 private:
 	void init_proc() {
@@ -448,9 +402,9 @@ public:
 				ncnn::VkMat out_tile_gpu;
 				{
 					ncnn::Extractor ex = this->net.create_extractor();
-					ex.input("Input1", in_tile_gpu);
+					ex.input(this->input_blob, in_tile_gpu);
 
-					ex.extract("Eltwise4", out_tile_gpu, cmd);
+					ex.extract(this->extract_blob, out_tile_gpu, cmd);
 				}
 
 				// postproc
@@ -673,6 +627,7 @@ int main(int argc, char** argv)
 	auto image = new waifu2x_image(&config);
 	auto processer = new waifu2x(gpuid);
 	processer->load_models(config.read_param(), config.read_model());
+	processer->set_model_blob(config.input_blob(), config.extract_blob());
 	image->decode(imagepath);
 	processer->proc_image(image);
 	image->encode(outputpngpath);
