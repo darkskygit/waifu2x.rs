@@ -63,8 +63,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # change these path to yours
 include_directories(${Vulkan_INCLUDE_DIR})
-include_directories("/home/nihui/osd/ncnn/build/install/include")
-link_directories("/home/nihui/osd/ncnn/build/install/lib")
+include_directories(${INCLUDE_LIST})
+link_directories(${LINK_LIST})
 
 # look for vulkan compute shader and compile
 set(SHADER_SPV_HEX_FILES)
@@ -81,6 +81,10 @@ if(NO_INT8_SUPPORT)
     add_compile_definitions(NO_INT8_SUPPORT)
 endif(NO_INT8_SUPPORT)
 
+if(WAIFU2X_LITE)
+    add_compile_definitions(WAIFU2X_LITE)
+endif(WAIFU2X_LITE)
+
 if (MSVC AND MSVC_STATIC)
     foreach(flag_var
         CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
@@ -91,8 +95,15 @@ if (MSVC AND MSVC_STATIC)
     endforeach(flag_var)
 endif (MSVC AND MSVC_STATIC)
 
-add_executable(waifu2x-ncnn-vulkan waifu2x.cpp)
+add_library(waifu2x-ncnn-vulkan STATIC waifu2x.cpp)
 
 add_dependencies(waifu2x-ncnn-vulkan generate-spirv)
 
+if(CMAKE_BUILD_TYPE MATCHES "MinSizeRel")
+    set_target_properties(waifu2x-ncnn-vulkan PROPERTIES COMPILE_FLAGS "/GL")
+    set_target_properties(waifu2x-ncnn-vulkan PROPERTIES LINK_FLAGS "/LTCG")
+endif()
+
 target_link_libraries(waifu2x-ncnn-vulkan ncnn ${Vulkan_LIBRARY} ${OpenMP_CXX_LIBRARIES})
+
+install(TARGETS waifu2x-ncnn-vulkan ARCHIVE DESTINATION lib)
