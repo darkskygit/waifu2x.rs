@@ -240,7 +240,7 @@ private:
 public:
 	void proc_image(waifu2x_image* image)
 	{
-		//#pragma omp parallel for num_threads(2)
+		#pragma omp parallel for num_threads(this->vkdev->info.compute_queue_count)
 		for (int yi = 0; yi < image->ytiles; yi++)
 		{
 			int in_tile_y0 = max(yi * image->TILE_SIZE_Y - image->prepadding, 0);

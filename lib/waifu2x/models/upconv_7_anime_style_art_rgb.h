@@ -10,7 +10,6 @@
 #include "models-upconv_7_anime_style_art_rgb/scale2.0x_model.mem.h"
 
 namespace upconv_7_anime_style_art_rgb {
-
 	const unsigned char* get_param(int noise, int scale) {
 		switch (noise) {
 		case 0:

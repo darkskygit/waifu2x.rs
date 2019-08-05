@@ -99,11 +99,11 @@ add_library(waifu2x-ncnn-vulkan STATIC waifu2x.cpp)
 
 add_dependencies(waifu2x-ncnn-vulkan generate-spirv)
 
-if(CMAKE_BUILD_TYPE MATCHES "MinSizeRel")
+if(MSVC AND CMAKE_BUILD_TYPE MATCHES "MinSizeRel")
     set_target_properties(waifu2x-ncnn-vulkan PROPERTIES COMPILE_FLAGS "/GL")
     set_target_properties(waifu2x-ncnn-vulkan PROPERTIES LINK_FLAGS "/LTCG")
 endif()
 
-target_link_libraries(waifu2x-ncnn-vulkan ncnn ${Vulkan_LIBRARY} ${OpenMP_CXX_LIBRARIES})
+target_link_libraries(waifu2x-ncnn-vulkan ncnn ${Vulkan_LIBRARYS} ${OpenMP_CXX_LIBRARIES})
 
 install(TARGETS waifu2x-ncnn-vulkan ARCHIVE DESTINATION lib)
