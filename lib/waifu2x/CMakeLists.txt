@@ -81,9 +81,13 @@ if(NO_INT8_SUPPORT)
     add_compile_definitions(NO_INT8_SUPPORT)
 endif(NO_INT8_SUPPORT)
 
-if(WAIFU2X_LITE)
-    add_compile_definitions(WAIFU2X_LITE)
-endif(WAIFU2X_LITE)
+if(WAIFU2X_NOISE_ONLY)
+    add_compile_definitions(WAIFU2X_NOISE_ONLY)
+endif(WAIFU2X_NOISE_ONLY)
+
+if(WAIFU2X_UPCONV7_ONLY)
+    add_compile_definitions(WAIFU2X_UPCONV7_ONLY)
+endif(WAIFU2X_UPCONV7_ONLY)
 
 if (MSVC AND MSVC_STATIC)
     foreach(flag_var

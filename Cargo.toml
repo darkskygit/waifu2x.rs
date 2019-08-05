@@ -1,12 +1,20 @@
 [package]
-name = "waifu2x-rs"
+name = "waifu2x"
 version = "0.1.0"
 authors = ["DarkSky"]
 edition = "2018"
 
+[features]
+default = []
+noise = []
+upconv7 = []
+
 [dependencies]
 libc = "0.2.60"
-image = "0.22.1"
+
+[dependencies.image]
+version = "0.22.1"
+default-features = false
 
 [build-dependencies]
 cmake = "0.1.40"

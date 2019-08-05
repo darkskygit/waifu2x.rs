@@ -34,8 +34,10 @@ static const uint32_t waifu2x_postproc_int8s_spv_data[] = {
 };
 #endif
 
-#ifdef WAIFU2X_LITE
+#if defined(WAIFU2X_NOISE_ONLY)
 #include "models/models_noise_only.h"
+#elif defined(WAIFU2X_UPCONV7_ONLY)
+#include "models/models_upconv_7_only.h"
 #else
 #include "models/models.h"
 #endif

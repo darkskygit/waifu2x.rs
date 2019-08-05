@@ -25,7 +25,10 @@ fn main() {
         .define("MSVC_STATIC", "ON")
         .define("NCNN_VULKAN", "ON")
         .build();
-    println!("cargo:rustc-link-search=native={}", ncnn.join("lib").display());
+    println!(
+        "cargo:rustc-link-search=native={}",
+        ncnn.join("lib").display()
+    );
     println!("cargo:rustc-link-lib=static={}", "ncnn");
     let waifu2x_dir = out_dir.join("waifu2x");
     create_dir(&waifu2x_dir).unwrap_or_default();
@@ -37,11 +40,26 @@ fn main() {
         .define("MSVC_STATIC", "ON")
         .define("INCLUDE_LIST", ncnn.join("include").join("ncnn"))
         .define("LINK_LIST", ncnn.join("lib"))
-        .define("WAIFU2X_LITE", "ON")
+        .define(
+            if cfg!(upconv7) {
+                "WAIFU2X_UPCONV7_ONLY"
+            } else if cfg!(noise) {
+                "WAIFU2X_NOISE_ONLY"
+            } else {
+                "WAIFU2X_FULL"
+            },
+            "ON",
+        )
         .build();
-    println!("cargo:rustc-link-search=native={}", waifu2x.join("lib").display());
+    println!(
+        "cargo:rustc-link-search=native={}",
+        waifu2x.join("lib").display()
+    );
     println!("cargo:rustc-link-lib=static={}", "waifu2x-ncnn-vulkan");
-    println!("cargo:rustc-link-search=native={}", vulkan_dir.join("lib").display());
+    println!(
+        "cargo:rustc-link-search=native={}",
+        vulkan_dir.join("lib").display()
+    );
     if cfg!(windows) {
         println!("cargo:rustc-link-lib=static={}", "vulkan-1");
     } else {
