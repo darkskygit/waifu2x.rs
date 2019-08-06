@@ -74,9 +74,6 @@ compile_shader(waifu2x_postproc.comp)
 
 add_custom_target(generate-spirv DEPENDS ${SHADER_SPV_HEX_FILES})
 
-option(NO_INT8_SUPPORT "no int8 support" OFF)
-set(MSVC_STATIC "build with /mt" OFF)
-
 if(NO_INT8_SUPPORT)
     add_compile_definitions(NO_INT8_SUPPORT)
 endif(NO_INT8_SUPPORT)

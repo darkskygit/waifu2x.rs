@@ -41,9 +41,9 @@ fn main() {
         .define("INCLUDE_LIST", ncnn.join("include").join("ncnn"))
         .define("LINK_LIST", ncnn.join("lib"))
         .define(
-            if cfg!(upconv7) {
+            if cfg!(feature = "upconv7") {
                 "WAIFU2X_UPCONV7_ONLY"
-            } else if cfg!(noise) {
+            } else if cfg!(feature = "noise") {
                 "WAIFU2X_NOISE_ONLY"
             } else {
                 "WAIFU2X_FULL"
