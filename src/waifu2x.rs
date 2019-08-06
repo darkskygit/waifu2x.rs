@@ -1,4 +1,4 @@
-use image::{DynamicImage, FilterType, ImageBuffer, Rgb};
+use image::{DynamicImage, FilterType, GenericImageView, RgbImage};
 use libc::{c_int, c_void};
 
 // for /f %f in ('dir /a/b *.prototxt') do @caffe2ncnn.exe %~nf.prototxt %~nf.json.caffemodel %~nf.param %~nf.bin 256 info.json
@@ -52,9 +52,8 @@ impl Waifu2x {
         }
     }
     pub fn proc_image(&self, image: DynamicImage, downsampling: bool) -> DynamicImage {
-        let image = image.to_rgb();
         let image_ptr = std::ptr::null_mut();
-        let mut image_raw = image.clone().into_raw();
+        let mut image_raw = image.to_rgb().into_raw();
         unsafe {
             let data = proc_image(
                 self.config,
@@ -65,7 +64,7 @@ impl Waifu2x {
                 3,
                 &image_ptr,
             );
-            let image = if let Some(new_image) = ImageBuffer::<Rgb<_>, _>::from_raw(
+            let image = if let Some(new_image) = RgbImage::from_raw(
                 image.width() * u32::from(self.scale),
                 image.height() * u32::from(self.scale),
                 std::slice::from_raw_parts(
@@ -85,7 +84,9 @@ impl Waifu2x {
                     new_image
                 }
             } else {
-                DynamicImage::ImageRgb8(image)
+                DynamicImage::ImageRgb8(
+                    RgbImage::from_raw(image.width(), image.height(), image_raw).unwrap(),
+                )
             };
             free_image(image_ptr);
             image
