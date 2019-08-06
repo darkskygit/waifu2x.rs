@@ -12,6 +12,9 @@ upconv7 = []
 [dependencies]
 libc = "0.2.60"
 
+[dependencies.ncnn-sys]
+path = "ncnn-sys"
+
 [dependencies.image]
 version = "0.22.1"
 default-features = false
