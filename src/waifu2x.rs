@@ -79,7 +79,7 @@ impl Waifu2x {
             ) {
                 let new_image = DynamicImage::ImageRgb8(new_image);
                 if downsampling && self.scale > 1 {
-                    new_image.resize(image.width(), image.height(), FilterType::Lanczos3)
+                    new_image.resize(image.width(), image.height(), FilterType::CatmullRom)
                 } else {
                     new_image
                 }
