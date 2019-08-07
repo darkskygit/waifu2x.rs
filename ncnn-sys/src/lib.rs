@@ -1,0 +1,1 @@
+#![feature(static_nobundle)]

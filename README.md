@@ -2,6 +2,8 @@
 
 A [waifu2x-ncnn-vulkan](https://github.com/nihui/waifu2x-ncnn-vulkan) Rust binding.
 
+This library needs to be compiled with the rust nightly.
+
 # Usage
 
 ```rust
