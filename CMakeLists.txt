@@ -58,7 +58,7 @@ endif (MSVC AND MSVC_STATIC)
 
 add_subdirectory(src)
 
-# if(MSVC AND CMAKE_BUILD_TYPE MATCHES "MinSizeRel")
-#     set_target_properties(ncnn PROPERTIES COMPILE_FLAGS "/GL")
-#     set_target_properties(ncnn PROPERTIES LINK_FLAGS "/LTCG")
-# endif()
+if(MSVC AND CMAKE_BUILD_TYPE MATCHES "MinSizeRel")
+    set_target_properties(ncnn PROPERTIES COMPILE_FLAGS "/GL")
+    set_target_properties(ncnn PROPERTIES LINK_FLAGS "/LTCG")
+endif()
