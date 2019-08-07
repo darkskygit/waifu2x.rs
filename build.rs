@@ -30,7 +30,7 @@ fn main() {
         "cargo:rustc-link-search=native={}",
         ncnn.join("lib").display()
     );
-    println!("cargo:rustc-link-lib=static={}", "ncnn");
+    println!("cargo:rustc-link-lib=static-nobundle={}", "ncnn");
     println!("cargo:vulkan_dir={}", vulkan_dir.display());
     println!("cargo:vulkan_lib={}", vulkan_dir.join("lib").display());
     println!("cargo:include={}", ncnn.join("include").join("ncnn").display());
