@@ -30,12 +30,12 @@ fn main() {
         "cargo:rustc-link-search=native={}",
         waifu2x.join("lib").display()
     );
-    println!("cargo:rustc-link-lib=static={}", "waifu2x-ncnn-vulkan");
+    println!("cargo:rustc-link-lib=static-nobundle={}", "waifu2x-ncnn-vulkan");
     println!(
         "cargo:rustc-link-search=native={}",
         env::var("DEP_NCNN_LIBRARY").unwrap()
     );
-    println!("cargo:rustc-link-lib=static={}", "ncnn");
+    println!("cargo:rustc-link-lib=static-nobundle={}", "ncnn");
     println!(
         "cargo:rustc-link-search=native={}",
         env::var("DEP_NCNN_VULKAN_LIB").unwrap()
