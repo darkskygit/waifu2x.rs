@@ -165,13 +165,16 @@ int Padding_arm::forward(const Mat& bottom_blob, Mat& top_blob, const Option& op
     int elempack = bottom_blob.elempack;
 
 #if __ARM_NEON
+    if (opt.use_packing_layout)
+    {
+
     if (elempack == 4)
     {
         int outw = w + left + right;
 
         if (dims == 1)
         {
-            top_blob.create(outw, elemsize, opt.blob_allocator);
+            top_blob.create(outw, elemsize, elempack, opt.blob_allocator);
             if (top_blob.empty())
                 return -100;
 
@@ -187,7 +190,7 @@ int Padding_arm::forward(const Mat& bottom_blob, Mat& top_blob, const Option& op
 
         if (dims == 2)
         {
-            top_blob.create(outw, outh, elemsize, opt.blob_allocator);
+            top_blob.create(outw, outh, elemsize, elempack, opt.blob_allocator);
             if (top_blob.empty())
                 return -100;
 
@@ -201,7 +204,7 @@ int Padding_arm::forward(const Mat& bottom_blob, Mat& top_blob, const Option& op
 
         if (dims == 3)
         {
-            top_blob.create(outw, outh, channels, elemsize, opt.blob_allocator);
+            top_blob.create(outw, outh, channels, elemsize, elempack, opt.blob_allocator);
             if (top_blob.empty())
                 return -100;
 
@@ -222,6 +225,8 @@ int Padding_arm::forward(const Mat& bottom_blob, Mat& top_blob, const Option& op
 
         return 0;
     }
+
+    } // opt.use_packing_layout
 #endif // __ARM_NEON
 
     return Padding::forward(bottom_blob, top_blob, opt);

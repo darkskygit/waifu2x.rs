@@ -37,10 +37,19 @@ namespace ncnn {
 #include "convolution_5x5_int8.h"
 #include "convolution_7x7_int8.h"
 
+#if __ARM_NEON
+#include "convolution_1x1_pack4.h"
+#include "convolution_3x3_pack4.h"
+#endif // __ARM_NEON
+
 DEFINE_LAYER_CREATOR(Convolution_arm)
 
 Convolution_arm::Convolution_arm()
 {
+#if __ARM_NEON
+    support_packing = true;
+#endif // __ARM_NEON
+
     activation = 0;
 }
 
@@ -88,6 +97,7 @@ int Convolution_arm::create_pipeline(const Option& opt)
     const int maxk = kernel_w * kernel_h;
     int num_input = weight_data_size / maxk / num_output;
 
+#if __ARM_NEON
     if (opt.use_packing_layout)
     {
 
@@ -160,6 +170,11 @@ int Convolution_arm::create_pipeline(const Option& opt)
                     }
                 }
             }
+        }
+
+        if (kernel_w == 3 && kernel_h == 3 && stride_w == 1 && stride_h == 1 && dilation_w == 1 && dilation_h == 1)
+        {
+            conv3x3s1_winograd64_transform_kernel_pack4_neon(weight_data, weight_3x3_winograd64_data_pack4, num_input, num_output);
         }
     }
 
@@ -244,6 +259,7 @@ int Convolution_arm::create_pipeline(const Option& opt)
     }
 
     } // opt.use_packing_layout
+#endif // __ARM_NEON
 
     use_winograd3x3 = false;
     use_sgemm1x1 = false;
@@ -368,18 +384,18 @@ int Convolution_arm::forwardDilation(const Mat& bottom_blob, Mat& top_blob, conv
     const int kernel_extent = dilation * (kernel_size - 1) + 1;
 
     Mat bottom_blob_bordered = bottom_blob;
-    if (pad_w > 0 || pad_h > 0)
+    if (pad_left > 0 || pad_right > 0 || pad_top > 0 || pad_bottom > 0)
     {
         Option opt_b = opt;
         opt_b.blob_allocator = opt.workspace_allocator;
-        copy_make_border(bottom_blob, bottom_blob_bordered, pad_h, pad_h, pad_w, pad_w, BORDER_CONSTANT, 0.f, opt_b);
+        copy_make_border(bottom_blob, bottom_blob_bordered, pad_top, pad_bottom, pad_left, pad_right, BORDER_CONSTANT, 0.f, opt_b);
         if (bottom_blob_bordered.empty())
             return -100;
 
         w = bottom_blob_bordered.w;
         h = bottom_blob_bordered.h;
     }
-    else if (pad_w == -233 && pad_h == -233)
+    else if (pad_left == -233 && pad_right == -233 && pad_top == -233 && pad_bottom == -233)
     {
         int wpad = kernel_extent + (w - 1) / stride * stride - w;
         int hpad = kernel_extent + (h - 1) / stride * stride - h;
@@ -388,6 +404,22 @@ int Convolution_arm::forwardDilation(const Mat& bottom_blob, Mat& top_blob, conv
             Option opt_b = opt;
             opt_b.blob_allocator = opt.workspace_allocator;
             copy_make_border(bottom_blob, bottom_blob_bordered, hpad / 2, hpad - hpad / 2, wpad / 2, wpad - wpad / 2, BORDER_CONSTANT, 0.f, opt_b);
+            if (bottom_blob_bordered.empty())
+                return -100;
+        }
+
+        w = bottom_blob_bordered.w;
+        h = bottom_blob_bordered.h;
+    }
+    else if (pad_left == -234 && pad_right == -234 && pad_top == -234 && pad_bottom == -234)
+    {
+        int wpad = kernel_extent + (w - 1) / stride * stride - w;
+        int hpad = kernel_extent + (h - 1) / stride * stride - h;
+        if (wpad > 0 || hpad > 0)
+        {
+            Option opt_b = opt;
+            opt_b.blob_allocator = opt.workspace_allocator;
+            copy_make_border(bottom_blob, bottom_blob_bordered, hpad - hpad / 2, hpad / 2, wpad - wpad / 2, wpad / 2, BORDER_CONSTANT, 0.f, opt_b);
             if (bottom_blob_bordered.empty())
                 return -100;
         }
@@ -469,6 +501,7 @@ int Convolution_arm::forward(const Mat& bottom_blob, Mat& top_blob, const Option
     // convolv with NxN kernel
     // value = value + bias
 
+#if __ARM_NEON
     if (opt.use_packing_layout)
     {
 
@@ -484,18 +517,13 @@ int Convolution_arm::forward(const Mat& bottom_blob, Mat& top_blob, const Option
     const int kernel_extent_h = dilation_h * (kernel_h - 1) + 1;
 
     Mat bottom_blob_bordered = bottom_blob;
-    if (pad_w > 0 || pad_h > 0)
+    if (pad_left > 0 || pad_right > 0 || pad_top > 0 || pad_bottom > 0)
     {
         Option opt_b = opt;
         opt_b.blob_allocator = opt.workspace_allocator;
-        copy_make_border(bottom_blob, bottom_blob_bordered, pad_h, pad_h, pad_w, pad_w, BORDER_CONSTANT, 0.f, opt_b);
-        if (bottom_blob_bordered.empty())
-            return -100;
-
-        w = bottom_blob_bordered.w;
-        h = bottom_blob_bordered.h;
+        copy_make_border(bottom_blob, bottom_blob_bordered, pad_top, pad_bottom, pad_left, pad_right, BORDER_CONSTANT, 0.f, opt_b);
     }
-    else if (pad_w == -233 && pad_h == -233)
+    else if (pad_left == -233 && pad_right == -233 && pad_top == -233 && pad_bottom == -233)
     {
         int wpad = kernel_extent_w + (w - 1) / stride_w * stride_w - w;
         int hpad = kernel_extent_h + (h - 1) / stride_h * stride_h - h;
@@ -504,13 +532,24 @@ int Convolution_arm::forward(const Mat& bottom_blob, Mat& top_blob, const Option
             Option opt_b = opt;
             opt_b.blob_allocator = opt.workspace_allocator;
             copy_make_border(bottom_blob, bottom_blob_bordered, hpad / 2, hpad - hpad / 2, wpad / 2, wpad - wpad / 2, BORDER_CONSTANT, 0.f, opt_b);
-            if (bottom_blob_bordered.empty())
-                return -100;
         }
-
-        w = bottom_blob_bordered.w;
-        h = bottom_blob_bordered.h;
     }
+    else if (pad_left == -234 && pad_right == -234 && pad_top == -234 && pad_bottom == -234)
+    {
+        int wpad = kernel_extent_w + (w - 1) / stride_w * stride_w - w;
+        int hpad = kernel_extent_h + (h - 1) / stride_h * stride_h - h;
+        if (wpad > 0 || hpad > 0)
+        {
+            Option opt_b = opt;
+            opt_b.blob_allocator = opt.workspace_allocator;
+            copy_make_border(bottom_blob, bottom_blob_bordered, hpad - hpad / 2, hpad / 2, wpad - wpad / 2, wpad / 2, BORDER_CONSTANT, 0.f, opt_b);
+        }
+    }
+    if (bottom_blob_bordered.empty())
+        return -100;
+
+    w = bottom_blob_bordered.w;
+    h = bottom_blob_bordered.h;
 
     int outw = (w - kernel_extent_w) / stride_w + 1;
     int outh = (h - kernel_extent_h) / stride_h + 1;
@@ -545,6 +584,24 @@ int Convolution_arm::forward(const Mat& bottom_blob, Mat& top_blob, const Option
 
     if (elempack == 4 && out_elempack == 4)
     {
+        if (kernel_w == 1 && kernel_h == 1 && stride_w == 1 && stride_h == 1 && dilation_w == 1 && dilation_h == 1)
+        {
+            conv1x1s1_sgemm_pack4_neon(bottom_blob_bordered, top_blob, weight_data_pack4, bias_data, opt, activation_type, activation_params);
+            return 0;
+        }
+
+        if (kernel_w == 3 && kernel_h == 3 && stride_w == 1 && stride_h == 1 && dilation_w == 1 && dilation_h == 1)
+        {
+            conv3x3s1_winograd64_pack4_neon(bottom_blob_bordered, top_blob, weight_3x3_winograd64_data_pack4, bias_data, opt);
+
+            if (activation)
+            {
+                activation->forward_inplace(top_blob, opt);
+            }
+
+            return 0;
+        }
+
         // num_output
         #pragma omp parallel for num_threads(opt.num_threads)
         for (int p=0; p<num_output / out_elempack; p++)
@@ -794,6 +851,7 @@ int Convolution_arm::forward(const Mat& bottom_blob, Mat& top_blob, const Option
     }
 
     } // opt.use_packed_layout
+#endif // __ARM_NEON
 
     if (bottom_blob.dims != 3)
     {
@@ -965,18 +1023,13 @@ int Convolution_arm::forward(const Mat& bottom_blob, Mat& top_blob, const Option
     }
 
     Mat bottom_blob_bordered = bottom_blob_unbordered;
-    if (pad_w > 0 || pad_h > 0)
+    if (pad_left > 0 || pad_right > 0 || pad_top > 0 || pad_bottom > 0)
     {
         Option opt_b = opt;
         opt_b.blob_allocator = opt.workspace_allocator;
-        copy_make_border(bottom_blob_unbordered, bottom_blob_bordered, pad_h, pad_h, pad_w, pad_w, BORDER_CONSTANT, 0.f, opt_b);
-        if (bottom_blob_bordered.empty())
-            return -100;
-
-        w = bottom_blob_bordered.w;
-        h = bottom_blob_bordered.h;
+        copy_make_border(bottom_blob_unbordered, bottom_blob_bordered, pad_top, pad_bottom, pad_left, pad_right, BORDER_CONSTANT, 0.f, opt_b);
     }
-    else if (pad_w == -233 && pad_h == -233)
+    else if (pad_left == -233 && pad_right == -233 && pad_top == -233 && pad_bottom == -233)
     {
         int wpad = kernel_size + (w - 1) / stride * stride - w;
         int hpad = kernel_size + (h - 1) / stride * stride - h;
@@ -985,13 +1038,24 @@ int Convolution_arm::forward(const Mat& bottom_blob, Mat& top_blob, const Option
             Option opt_b = opt;
             opt_b.blob_allocator = opt.workspace_allocator;
             copy_make_border(bottom_blob_unbordered, bottom_blob_bordered, hpad / 2, hpad - hpad / 2, wpad / 2, wpad - wpad / 2, BORDER_CONSTANT, 0.f, opt_b);
-            if (bottom_blob_bordered.empty())
-                return -100;
         }
-
-        w = bottom_blob_bordered.w;
-        h = bottom_blob_bordered.h;
     }
+    else if (pad_left == -234 && pad_right == -234 && pad_top == -234 && pad_bottom == -234)
+    {
+        int wpad = kernel_size + (w - 1) / stride * stride - w;
+        int hpad = kernel_size + (h - 1) / stride * stride - h;
+        if (wpad > 0 || hpad > 0)
+        {
+            Option opt_b = opt;
+            opt_b.blob_allocator = opt.workspace_allocator;
+            copy_make_border(bottom_blob_unbordered, bottom_blob_bordered, hpad - hpad / 2, hpad / 2, wpad - wpad / 2, wpad / 2, BORDER_CONSTANT, 0.f, opt_b);
+        }
+    }
+    if (bottom_blob_bordered.empty())
+        return -100;
+
+    w = bottom_blob_bordered.w;
+    h = bottom_blob_bordered.h;
 
     int outw = (w - kernel_size) / stride + 1;
     int outh = (h - kernel_size) / stride + 1;
