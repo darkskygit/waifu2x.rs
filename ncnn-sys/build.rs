@@ -25,6 +25,8 @@ fn main() {
         .env("VULKAN_SDK", &vulkan_dir)
         .define("MSVC_STATIC", "ON")
         .define("NCNN_VULKAN", "ON")
+        .define("NCNN_STDIO", "OFF")
+        .define("NCNN_STRING", "OFF")
         .build();
     println!(
         "cargo:rustc-link-search=native={}",
