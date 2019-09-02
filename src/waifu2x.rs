@@ -13,6 +13,7 @@ enum Bool {
 extern "C" {
     fn init_config(noise: c_int, scale: c_int, tilesize: c_int, is_cunet: Bool) -> *mut c_void;
     fn init_waifu2x(config: *mut c_void, gpuid: c_int) -> *mut c_void;
+    fn get_gpu_count(processer: *mut c_void) -> c_int;
     fn proc_image(
         config: *mut c_void,
         processer: *mut c_void,
@@ -49,6 +50,11 @@ impl Waifu2x {
                 waifu2x,
                 scale,
             }
+        }
+    }
+    pub fn get_gpu_count(&self) -> i32 {
+        unsafe {
+            get_gpu_count(self.waifu2x)
         }
     }
     pub fn proc_image(&self, image: DynamicImage, downsampling: bool) -> DynamicImage {

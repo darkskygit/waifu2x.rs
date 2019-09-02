@@ -137,6 +137,8 @@ private:
 
 class waifu2x
 {
+public:
+	int gpu_count = 0;
 private:
 	ncnn::Net net;
 	ncnn::VulkanDevice* vkdev;
@@ -150,7 +152,7 @@ public:
 	{
 		ncnn::create_gpu_instance();
 
-		int gpu_count = ncnn::get_gpu_count();
+		this->gpu_count = ncnn::get_gpu_count();
 		if (gpuid < 0 || gpuid >= gpu_count)
 		{
 			fprintf(stderr, "invalid gpu device");
@@ -396,6 +398,10 @@ extern "C" waifu2x* init_waifu2x(waifu2x_config* config, int gpuid)
 	processer->load_models(config->read_param(), config->read_model());
 	processer->set_model_blob(config->input_blob(), config->extract_blob());
 	return processer;
+}
+
+extern "C" int get_gpu_count(waifu2x* processer) {
+	return processer->gpu_count;
 }
 
 extern "C" void* proc_image(waifu2x_config* config, waifu2x* processer, unsigned char* data, int w, int h, int c, waifu2x_image*& image)
