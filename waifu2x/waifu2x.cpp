@@ -389,6 +389,10 @@ public:
 	}
 };
 
+extern "C" void init_ncnn() {
+	ncnn::create_gpu_instance();
+}
+
 extern "C" waifu2x_config* init_config(int noise, int scale, int tilesize, bool is_cunet)
 {
 	return new waifu2x_config(noise, scale, tilesize, is_cunet);

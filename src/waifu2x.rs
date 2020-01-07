@@ -11,6 +11,7 @@ enum Bool {
 }
 
 extern "C" {
+    fn init_ncnn();
     fn init_config(noise: c_int, scale: c_int, tilesize: c_int, is_cunet: Bool) -> *mut c_void;
     fn init_waifu2x(config: *mut c_void, gpuid: c_int) -> *mut c_void;
     fn get_gpu_count(processer: *mut c_void) -> c_int;
@@ -36,6 +37,9 @@ pub struct Waifu2x {
 unsafe impl Send for Waifu2x {}
 
 impl Waifu2x {
+    pub fn init() {
+        unsafe { init_ncnn() }
+    }
     pub fn new(gpuid: u8, noise: u8, scale: u8, tilesize: u16, is_cunet: bool) -> Self {
         unsafe {
             let config = init_config(
@@ -53,9 +57,7 @@ impl Waifu2x {
         }
     }
     pub fn get_gpu_count(&self) -> i32 {
-        unsafe {
-            get_gpu_count(self.waifu2x)
-        }
+        unsafe { get_gpu_count(self.waifu2x) }
     }
     pub fn proc_image(&self, image: DynamicImage, downsampling: bool) -> DynamicImage {
         let image_ptr = std::ptr::null_mut();
