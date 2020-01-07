@@ -1,0 +1,8 @@
+[submodule "ncnn-sys/ncnn"]
+	path = ncnn
+	url = https://github.com/darkskygit/waifu2x.rs
+	branch = ncnn
+[submodule "ncnn-sys/vulkan"]
+	path = vulkan
+	url = https://github.com/darkskygit/waifu2x.rs
+	branch = vulkan
