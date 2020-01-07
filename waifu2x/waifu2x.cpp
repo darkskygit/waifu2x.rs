@@ -150,7 +150,9 @@ private:
 public:
 	waifu2x(int gpuid = 0) : vkdev(0), preproc(0), postproc(0)
 	{
-		ncnn::create_gpu_instance();
+		if (ncnn::get_default_gpu_index() == -1) {
+			ncnn::create_gpu_instance();
+		}
 
 		this->gpu_count = ncnn::get_gpu_count();
 		if (gpuid < 0 || gpuid >= gpu_count)
