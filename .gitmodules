@@ -2,11 +2,3 @@
 	path = waifu2x/models
 	url = https://github.com/darkskygit/waifu2x.rs
 	branch = models
-[submodule "ncnn-sys/ncnn"]
-	path = ncnn-sys/ncnn
-	url = https://github.com/darkskygit/waifu2x.rs
-	branch = ncnn
-[submodule "ncnn-sys/vulkan"]
-	path = ncnn-sys/vulkan
-	url = https://github.com/darkskygit/waifu2x.rs
-	branch = vulkan
