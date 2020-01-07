@@ -3,6 +3,13 @@ name = "waifu2x"
 version = "0.1.0"
 authors = ["DarkSky"]
 edition = "2018"
+description = "A waifu2x-ncnn-vulkan Rust binding"
+license = "AGPL-3.0-or-later"
+homepage = "https://github.com/darkskygit/waifu2x.rs"
+repository = "https://github.com/darkskygit/waifu2x.rs"
+keywords = ["binding", "waifu2x", "ncnn", "vulkan"]
+include = ["src/**/*", "waifu2x/**/*", "build.rs", "LICENSE", "README.md"]
+readme = "README.md"
 
 [features]
 default = []
@@ -10,15 +17,13 @@ noise = []
 upconv7 = []
 
 [dependencies]
-libc = "0.2.62"
-
-[dependencies.ncnn-sys]
-path = "ncnn-sys"
+libc = "0.2.66"
+ncnn-sys = "0.1.1"
 
 [dependencies.image]
-version = "0.22.1"
+version = "0.22.3"
 default-features = false
 
 [build-dependencies]
 cmake = "0.1.42"
-path-absolutize = "1.1.6"
+path-absolutize = "1.1.7"
