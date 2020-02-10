@@ -1,4 +1,4 @@
-use image::{DynamicImage, FilterType, GenericImageView, RgbImage};
+use image::{imageops::CatmullRom, DynamicImage, GenericImageView, RgbImage};
 use libc::{c_int, c_void};
 
 // for /f %f in ('dir /a/b *.prototxt') do @caffe2ncnn.exe %~nf.prototxt %~nf.json.caffemodel %~nf.param %~nf.bin 256 info.json
@@ -87,7 +87,7 @@ impl Waifu2x {
             ) {
                 let new_image = DynamicImage::ImageRgb8(new_image);
                 if downsampling && self.scale > 1 {
-                    new_image.resize(image.width(), image.height(), FilterType::CatmullRom)
+                    new_image.resize(image.width(), image.height(), CatmullRom)
                 } else {
                     new_image
                 }
