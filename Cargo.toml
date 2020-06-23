@@ -17,12 +17,12 @@ noise = []
 upconv7 = []
 
 [dependencies]
-libc = "0.2.66"
-ncnn-sys = "0.1.1"
+libc = "0.2.71"
+ncnn-sys = "0.1.2"
 
 [dependencies.image]
-version = "0.23.0"
+version = "0.23.6"
 default-features = false
 
 [build-dependencies]
-cmake = "0.1.42"
+cmake = "0.1.44"
