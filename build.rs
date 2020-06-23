@@ -5,9 +5,8 @@ use std::fs::create_dir;
 use std::path::PathBuf;
 
 fn main() {
-    let proj_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap())
-        .absolutize()
-        .unwrap();
+    let root_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
+    let proj_dir = root_dir.absolutize().unwrap();
     let vulkan_dir = proj_dir.join("vulkan");
     println!("vulkan_dir: {}", vulkan_dir.display());
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());

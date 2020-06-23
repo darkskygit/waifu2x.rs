@@ -17,6 +17,6 @@ default = ["bundled"]
 bundled = []
 
 [build-dependencies]
-cmake = "0.1.42"
-path-absolutize = "1.1.7"
+cmake = "0.1.44"
+path-absolutize = "3.0.0"
 fs_extra = "1.1.0"
