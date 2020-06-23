@@ -26,4 +26,3 @@ default-features = false
 
 [build-dependencies]
 cmake = "0.1.42"
-path-absolutize = "1.1.7"
