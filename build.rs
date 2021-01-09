@@ -18,7 +18,7 @@ fn main() {
             &out_dir,
             &CopyOptions::new(),
         )
-        .unwrap();
+        .unwrap_or_default();
         ncnn_dir
     } else {
         create_dir(&ncnn_dir).unwrap_or_default();
