@@ -21,6 +21,10 @@ fn main() {
         .unwrap_or_default();
         ncnn_dir
     } else {
+        // md build && cd build
+        // cmake -DNCNN_VULKAN=ON -DNCNN_BUILD_WITH_STATIC_CRT=ON -DNCNN_ENABLE_LTO=ON -DNCNN_STDIO=OFF -DNCNN_STRING=OFF ..
+        // cmake --build . --config MinSizeRel -j 16
+        // cmake --install . --config MinSizeRel  
         create_dir(&ncnn_dir).unwrap_or_default();
         Config::new("ncnn")
             .generator(if cfg!(windows) {
@@ -32,7 +36,8 @@ fn main() {
             .static_crt(true)
             .profile("MinSizeRel")
             .env("VULKAN_SDK", &vulkan_dir)
-            .define("MSVC_STATIC", "ON")
+            .define("NCNN_BUILD_WITH_STATIC_CRT", "ON")
+            .define("NCNN_ENABLE_LTO", "ON")
             .define("NCNN_VULKAN", "ON")
             .define("NCNN_STDIO", "OFF")
             .define("NCNN_STRING", "OFF")
