@@ -19,8 +19,6 @@
 
 namespace ncnn {
 
-typedef void (*conv_func)(const Mat&, Mat&, const Mat&, const Mat&, const Option&);
-
 class Convolution_arm : virtual public Convolution
 {
 public:
@@ -30,28 +28,54 @@ public:
     virtual int destroy_pipeline(const Option& opt);
 
     virtual int forward(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
-    virtual int forwardDilation(const Mat& bottom_blob, Mat& top_blob, conv_func conv, const Option& opt) const;
+
+protected:
+#if __ARM_FEATURE_FP16_VECTOR_ARITHMETIC
+    int create_pipeline_fp16s(const Option& opt);
+    int forward_fp16s(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
+    int forward_fp16sa(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
+#endif
+    int create_pipeline_bf16s(const Option& opt);
+    int forward_bf16s(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
+#if NCNN_INT8
+    int create_pipeline_int8_arm(const Option& opt);
+    int forward_int8_arm(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
+#endif
+    int forwardDilation_arm(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
 
 public:
     Layer* activation;
     bool use_winograd3x3;
     bool use_sgemm1x1;
     Mat weight_3x3_winograd64_data;
-    Mat weight_1x1_sgemm_data;
     Mat weight_3x3s2_data;
-    Mat weight_3x3s2_int8_data;
-    Mat weight_1x1s1_sgemm_int8_data;
-    Mat weight_3x3_winograd23_data;
-    Mat weight_sgemm_int8_data;
     Mat weight_sgemm_data;
-    std::vector<Mat> weight_3x3_winograd23_int8_data;
+
+    // forwardDilation
+    Layer* convolution_dilation1;
 
     // pack4
     Mat weight_data_pack4;
     Mat weight_data_pack1to4;
     Mat weight_data_pack4to1;
 
-    Mat weight_3x3_winograd64_data_pack4;
+    Mat weight_3x3_winograd42_data_pack4;
+    Mat weight_sgemm_data_pack4;
+
+    // fp16
+    Mat weight_data_fp16;
+    Mat bias_data_fp16;
+
+    // bf16
+    Mat weight_data_bf16;
+
+#if NCNN_INT8
+    // int8
+    Mat weight_data_int8;
+
+    //     Mat weight_3x3s2_data_int8;
+    std::vector<Mat> weight_3x3_winograd23_data_int8;
+#endif
 };
 
 } // namespace ncnn

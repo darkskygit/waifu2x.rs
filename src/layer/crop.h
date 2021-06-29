@@ -30,6 +30,11 @@ public:
 
     virtual int forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_blobs, const Option& opt) const;
 
+protected:
+    void resolve_crop_roi(const Mat& bottom_blob, int& woffset, int& hoffset, int& coffset, int& outw, int& outh, int& outc) const;
+    void resolve_crop_roi(const Mat& bottom_blob, const Mat& reference_blob, int& woffset, int& hoffset, int& coffset, int& outw, int& outh, int& outc) const;
+    void resolve_crop_roi(const Mat& bottom_blob, const int* param_data, int& woffset, int& hoffset, int& coffset, int& outw, int& outh, int& outc) const;
+
 public:
     // -233 = dynamic offset from reference blob
     int woffset;
@@ -46,6 +51,12 @@ public:
     int woffset2;
     int hoffset2;
     int coffset2;
+
+    // numpy-style slice
+    // if provided, all the above attributes will be ignored
+    Mat starts;
+    Mat ends;
+    Mat axes;
 };
 
 } // namespace ncnn

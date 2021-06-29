@@ -15,16 +15,15 @@
 #ifndef NCNN_MODELBIN_H
 #define NCNN_MODELBIN_H
 
-#include <stdio.h>
 #include "mat.h"
-#include "platform.h"
 
 namespace ncnn {
 
-class Net;
-class ModelBin
+class DataReader;
+class NCNN_EXPORT ModelBin
 {
 public:
+    ModelBin();
     virtual ~ModelBin();
     // element type
     // 0 = auto
@@ -39,42 +38,39 @@ public:
     virtual Mat load(int w, int h, int c, int type) const;
 };
 
-#if NCNN_STDIO
-class ModelBinFromStdio : public ModelBin
+class ModelBinFromDataReaderPrivate;
+class NCNN_EXPORT ModelBinFromDataReader : public ModelBin
 {
 public:
-    // construct from file
-    ModelBinFromStdio(FILE* binfp);
+    explicit ModelBinFromDataReader(const DataReader& dr);
+    virtual ~ModelBinFromDataReader();
 
     virtual Mat load(int w, int type) const;
 
-protected:
-    FILE* binfp;
-};
-#endif // NCNN_STDIO
+private:
+    ModelBinFromDataReader(const ModelBinFromDataReader&);
+    ModelBinFromDataReader& operator=(const ModelBinFromDataReader&);
 
-class ModelBinFromMemory : public ModelBin
-{
-public:
-    // construct from external memory
-    ModelBinFromMemory(const unsigned char*& mem);
-
-    virtual Mat load(int w, int type) const;
-
-protected:
-    const unsigned char*& mem;
+private:
+    ModelBinFromDataReaderPrivate* const d;
 };
 
-class ModelBinFromMatArray : public ModelBin
+class ModelBinFromMatArrayPrivate;
+class NCNN_EXPORT ModelBinFromMatArray : public ModelBin
 {
 public:
     // construct from weight blob array
-    ModelBinFromMatArray(const Mat* weights);
+    explicit ModelBinFromMatArray(const Mat* weights);
+    virtual ~ModelBinFromMatArray();
 
     virtual Mat load(int w, int type) const;
 
-protected:
-    mutable const Mat* weights;
+private:
+    ModelBinFromMatArray(const ModelBinFromMatArray&);
+    ModelBinFromMatArray& operator=(const ModelBinFromMatArray&);
+
+private:
+    ModelBinFromMatArrayPrivate* const d;
 };
 
 } // namespace ncnn

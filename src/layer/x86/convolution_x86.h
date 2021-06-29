@@ -19,8 +19,6 @@
 
 namespace ncnn {
 
-typedef void (*conv_func)(const Mat&, Mat&, const Mat&, const Mat&, const Option&);
-
 class Convolution_x86 : virtual public Convolution
 {
 public:
@@ -30,14 +28,32 @@ public:
     virtual int destroy_pipeline(const Option& opt);
 
     virtual int forward(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
-    virtual int forwardDilation(const Mat& bottom_blob, Mat &top_blob, conv_func conv, const Option& opt) const;
+
+protected:
+#if NCNN_INT8
+    int create_pipeline_int8_x86(const Option& opt);
+    int forward_int8_x86(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
+#endif
+    int forwardDilation_x86(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
 
 public:
     Layer* activation;
-    bool use_winograd3x3;
     Mat weight_3x3_winograd23_data;
     Mat weight_sgemm_data;
     std::vector<Mat> weight_3x3_winograd43_data;
+
+    // forwardDilation
+    Layer* convolution_dilation1;
+
+    Mat weight_data_packed;
+
+    Mat weight_3x3_winograd64_data_pack8;
+
+#if NCNN_INT8
+    // int8
+    Mat weight_data_int8;
+    Mat weight_3x3_winograd23_data_int8;
+#endif
 };
 
 } // namespace ncnn

@@ -27,7 +27,9 @@ public:
     virtual int create_pipeline(const Option& opt);
     virtual int destroy_pipeline(const Option& opt);
 
+    using LRN::forward_inplace;
     virtual int forward_inplace(VkMat& bottom_top_blob, VkCompute& cmd, const Option& opt) const;
+    virtual int forward_inplace(VkImageMat& bottom_top_blob, VkCompute& cmd, const Option& opt) const;
 
 public:
     Pipeline* pipeline_lrn_square_pad;
@@ -36,6 +38,10 @@ public:
     Pipeline* pipeline_lrn_norm_across_channel_pack4;
     Pipeline* pipeline_lrn_square_pad_within_channel_pack4;
     Pipeline* pipeline_lrn_norm_within_channel_pack4;
+    Pipeline* pipeline_lrn_square_pad_across_channel_pack8;
+    Pipeline* pipeline_lrn_norm_across_channel_pack8;
+    Pipeline* pipeline_lrn_square_pad_within_channel_pack8;
+    Pipeline* pipeline_lrn_norm_within_channel_pack8;
 };
 
 } // namespace ncnn

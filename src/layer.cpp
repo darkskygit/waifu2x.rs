@@ -14,12 +14,15 @@
 
 #include "layer.h"
 
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
-#include <algorithm>
 #include "cpu.h"
 
+#include <math.h>
+#include <string.h>
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4250)
+#endif
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Woverloaded-virtual"
@@ -27,6 +30,9 @@
 #include "layer_declaration.h"
 #ifdef __clang__
 #pragma clang diagnostic pop
+#endif
+#ifdef _MSC_VER
+#pragma warning(pop)
 #endif
 
 namespace ncnn {
@@ -38,9 +44,21 @@ Layer::Layer()
     support_vulkan = false;
     support_packing = false;
 
+    support_bf16_storage = false;
+    support_fp16_storage = false;
+    support_int8_storage = false;
+    support_image_storage = false;
+    support_tensor_storage = false;
+
+    support_weight_fp16_storage = false;
+
+    typeindex = -1;
+
 #if NCNN_VULKAN
     vkdev = 0;
 #endif // NCNN_VULKAN
+
+    userdata = 0;
 }
 
 Layer::~Layer()
@@ -119,11 +137,7 @@ int Layer::forward(const std::vector<VkMat>& bottom_blobs, std::vector<VkMat>& t
     top_blobs.resize(bottom_blobs.size());
     for (int i = 0; i < (int)top_blobs.size(); i++)
     {
-        top_blobs[i].create_like(bottom_blobs[i], bottom_blobs[i].allocator, bottom_blobs[i].staging_allocator);
-        if (top_blobs[i].empty())
-            return -100;
-
-        cmd.record_clone(bottom_blobs[i], top_blobs[i]);
+        cmd.record_clone(bottom_blobs[i], top_blobs[i], opt);
     }
 
     return forward_inplace(top_blobs, cmd, opt);
@@ -134,11 +148,31 @@ int Layer::forward(const VkMat& bottom_blob, VkMat& top_blob, VkCompute& cmd, co
     if (!support_inplace)
         return -1;
 
-    top_blob.create_like(bottom_blob, bottom_blob.allocator, bottom_blob.staging_allocator);
-    if (top_blob.empty())
-        return -100;
+    cmd.record_clone(bottom_blob, top_blob, opt);
 
-    cmd.record_clone(bottom_blob, top_blob);
+    return forward_inplace(top_blob, cmd, opt);
+}
+
+int Layer::forward(const std::vector<VkImageMat>& bottom_blobs, std::vector<VkImageMat>& top_blobs, VkCompute& cmd, const Option& opt) const
+{
+    if (!support_inplace)
+        return -1;
+
+    top_blobs.resize(bottom_blobs.size());
+    for (int i = 0; i < (int)top_blobs.size(); i++)
+    {
+        cmd.record_clone(bottom_blobs[i], top_blobs[i], opt);
+    }
+
+    return forward_inplace(top_blobs, cmd, opt);
+}
+
+int Layer::forward(const VkImageMat& bottom_blob, VkImageMat& top_blob, VkCompute& cmd, const Option& opt) const
+{
+    if (!support_inplace)
+        return -1;
+
+    cmd.record_clone(bottom_blob, top_blob, opt);
 
     return forward_inplace(top_blob, cmd, opt);
 }
@@ -152,19 +186,52 @@ int Layer::forward_inplace(VkMat& /*bottom_top_blob*/, VkCompute& /*cmd*/, const
 {
     return -1;
 }
+
+int Layer::forward_inplace(std::vector<VkImageMat>& /*bottom_top_blobs*/, VkCompute& /*cmd*/, const Option& /*opt*/) const
+{
+    return -1;
+}
+
+int Layer::forward_inplace(VkImageMat& /*bottom_top_blob*/, VkCompute& /*cmd*/, const Option& /*opt*/) const
+{
+    return -1;
+}
 #endif // NCNN_VULKAN
 
-static const layer_registry_entry layer_registry[] =
-{
+static const layer_registry_entry layer_registry[] = {
 #include "layer_registry.h"
 };
+
+#if NCNN_RUNTIME_CPU && NCNN_AVX2
+static const layer_registry_entry layer_registry_avx2[] = {
+#include "layer_registry_avx2.h"
+};
+#endif // NCNN_RUNTIME_CPU && NCNN_AVX2
+
+#if NCNN_RUNTIME_CPU && NCNN_ARM82 && !__APPLE__
+static const layer_registry_entry layer_registry_arm82[] = {
+#include "layer_registry_arm82.h"
+};
+#endif // NCNN_RUNTIME_CPU && NCNN_ARM82 && !__APPLE__
+
+#if NCNN_RUNTIME_CPU && NCNN_ARM82DOT
+static const layer_registry_entry layer_registry_arm82dot[] = {
+#include "layer_registry_arm82dot.h"
+};
+#endif // NCNN_RUNTIME_CPU && NCNN_ARM82DOT
+
+#if NCNN_RUNTIME_CPU && NCNN_RVV
+static const layer_registry_entry layer_registry_rvv[] = {
+#include "layer_registry_rvv.h"
+};
+#endif // NCNN_RUNTIME_CPU && NCNN_RVV
 
 static const int layer_registry_entry_count = sizeof(layer_registry) / sizeof(layer_registry_entry);
 
 #if NCNN_STRING
 int layer_to_index(const char* type)
 {
-    for (int i=0; i<layer_registry_entry_count; i++)
+    for (int i = 0; i < layer_registry_entry_count; i++)
     {
         if (strcmp(type, layer_registry[i].name) == 0)
             return i;
@@ -188,11 +255,46 @@ Layer* create_layer(int index)
     if (index < 0 || index >= layer_registry_entry_count)
         return 0;
 
-    layer_creator_func layer_creator = layer_registry[index].creator;
+    // clang-format off
+    // *INDENT-OFF*
+    layer_creator_func layer_creator = 0;
+#if NCNN_RUNTIME_CPU && NCNN_AVX2
+    if (ncnn::cpu_support_x86_avx2())
+    {
+        layer_creator = layer_registry_avx2[index].creator;
+    }
+    else
+#endif // NCNN_RUNTIME_CPU && NCNN_AVX2
+#if NCNN_RUNTIME_CPU && NCNN_ARM82DOT
+    if (ncnn::cpu_support_arm_asimdhp() && ncnn::cpu_support_arm_asimddp())
+    {
+        layer_creator = layer_registry_arm82dot[index].creator;
+    }
+    else
+#endif // NCNN_RUNTIME_CPU && NCNN_ARM82DOT
+#if NCNN_RUNTIME_CPU && NCNN_ARM82 && !__APPLE__
+    if (ncnn::cpu_support_arm_asimdhp())
+    {
+        layer_creator = layer_registry_arm82[index].creator;
+    }
+    else
+#endif // NCNN_RUNTIME_CPU && NCNN_ARM82 && !__APPLE__
+#if NCNN_RUNTIME_CPU && NCNN_RVV
+    if (ncnn::cpu_support_riscv_v())
+    {
+        layer_creator = layer_registry_rvv[index].creator;
+    }
+    else
+#endif // NCNN_RUNTIME_CPU && NCNN_RVV
+    {
+        layer_creator = layer_registry[index].creator;
+    }
+    // *INDENT-ON*
+    // clang-format on
     if (!layer_creator)
         return 0;
 
-    Layer* layer = layer_creator();
+    Layer* layer = layer_creator(0);
     layer->typeindex = index;
     return layer;
 }

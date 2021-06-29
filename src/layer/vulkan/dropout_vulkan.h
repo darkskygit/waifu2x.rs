@@ -27,11 +27,14 @@ public:
     virtual int create_pipeline(const Option& opt);
     virtual int destroy_pipeline(const Option& opt);
 
+    using Dropout::forward_inplace;
     virtual int forward_inplace(VkMat& bottom_top_blob, VkCompute& cmd, const Option& opt) const;
+    virtual int forward_inplace(VkImageMat& bottom_top_blob, VkCompute& cmd, const Option& opt) const;
 
 public:
     Pipeline* pipeline_dropout;
     Pipeline* pipeline_dropout_pack4;
+    Pipeline* pipeline_dropout_pack8;
 };
 
 } // namespace ncnn

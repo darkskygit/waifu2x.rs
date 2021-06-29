@@ -27,13 +27,29 @@ public:
     virtual int create_pipeline(const Option& opt);
     virtual int destroy_pipeline(const Option& opt);
 
+    virtual int upload_model(VkTransfer& cmd, const Option& opt);
+
+    using Padding::forward;
     virtual int forward(const VkMat& bottom_blob, VkMat& top_blob, VkCompute& cmd, const Option& opt) const;
 
     virtual int forward(const std::vector<VkMat>& bottom_blobs, std::vector<VkMat>& top_blobs, VkCompute& cmd, const Option& opt) const;
 
+    virtual int forward(const VkImageMat& bottom_blob, VkImageMat& top_blob, VkCompute& cmd, const Option& opt) const;
+
+    virtual int forward(const std::vector<VkImageMat>& bottom_blobs, std::vector<VkImageMat>& top_blobs, VkCompute& cmd, const Option& opt) const;
+
 public:
+    VkMat per_channel_pad_data_gpu;
+    VkImageMat per_channel_pad_data_gpu_image;
     Pipeline* pipeline_padding;
     Pipeline* pipeline_padding_pack4;
+    Pipeline* pipeline_padding_pack1to4;
+    Pipeline* pipeline_padding_pack4to1;
+    Pipeline* pipeline_padding_pack8;
+    Pipeline* pipeline_padding_pack1to8;
+    Pipeline* pipeline_padding_pack4to8;
+    Pipeline* pipeline_padding_pack8to4;
+    Pipeline* pipeline_padding_pack8to1;
 };
 
 } // namespace ncnn

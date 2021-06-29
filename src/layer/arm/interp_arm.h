@@ -22,7 +22,16 @@ namespace ncnn {
 class Interp_arm : virtual public Interp
 {
 public:
-    virtual int forward(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
+    Interp_arm();
+
+    virtual int forward(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_blobs, const Option& opt) const;
+
+protected:
+#if __ARM_FEATURE_FP16_VECTOR_ARITHMETIC
+    int forward_fp16s(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_blobs, const Option& opt) const;
+    int forward_fp16sa(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_blobs, const Option& opt) const;
+#endif
+    int forward_bf16s(const std::vector<Mat>& bottom_blobs, std::vector<Mat>& top_blobs, const Option& opt) const;
 };
 
 } // namespace ncnn

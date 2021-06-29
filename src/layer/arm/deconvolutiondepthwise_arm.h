@@ -29,16 +29,26 @@ public:
 
     virtual int forward(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
 
+protected:
+#if __ARM_FEATURE_FP16_VECTOR_ARITHMETIC
+    int forward_fp16s(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
+    int forward_fp16sa(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
+#endif
+    int forward_bf16s(const Mat& bottom_blob, Mat& top_blob, const Option& opt) const;
+
 public:
-    Layer* activation;
     std::vector<ncnn::Layer*> group_ops;
 
     // packing
     Mat weight_data_pack4;
+    Mat weight_data_pack1;
 
-    Mat weight_data_pack4_groups;
-    Mat weight_data_pack1to4_groups;
-    Mat weight_data_pack4to1_groups;
+    // fp16
+    Mat weight_data_fp16;
+    Mat bias_data_fp16;
+
+    // bf16
+    Mat weight_data_bf16;
 };
 
 } // namespace ncnn

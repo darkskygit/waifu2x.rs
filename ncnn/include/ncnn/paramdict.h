@@ -15,21 +15,32 @@
 #ifndef NCNN_PARAMDICT_H
 #define NCNN_PARAMDICT_H
 
-#include <stdio.h>
 #include "mat.h"
-#include "platform.h"
 
 // at most 32 parameters
 #define NCNN_MAX_PARAM_COUNT 32
 
 namespace ncnn {
 
+class DataReader;
 class Net;
-class ParamDict
+class ParamDictPrivate;
+class NCNN_EXPORT ParamDict
 {
 public:
     // empty
     ParamDict();
+
+    virtual ~ParamDict();
+
+    // copy
+    ParamDict(const ParamDict&);
+
+    // assign
+    ParamDict& operator=(const ParamDict&);
+
+    // get type
+    int type(int id) const;
 
     // get int
     int get(int id, int def) const;
@@ -50,22 +61,11 @@ protected:
 
     void clear();
 
-#if NCNN_STDIO
-#if NCNN_STRING
-    int load_param(FILE* fp);
-    int load_param_mem(const char*& mem);
-#endif // NCNN_STRING
-    int load_param_bin(FILE* fp);
-#endif // NCNN_STDIO
-    int load_param(const unsigned char*& mem);
+    int load_param(const DataReader& dr);
+    int load_param_bin(const DataReader& dr);
 
-protected:
-    struct
-    {
-        int loaded;
-        union { int i; float f; };
-        Mat v;
-    } params[NCNN_MAX_PARAM_COUNT];
+private:
+    ParamDictPrivate* const d;
 };
 
 } // namespace ncnn

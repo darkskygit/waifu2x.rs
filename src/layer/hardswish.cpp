@@ -13,11 +13,8 @@
 // specific language governing permissions and limitations under the License.
 
 #include "hardswish.h"
-#include <algorithm>
 
 namespace ncnn {
-
-DEFINE_LAYER_CREATOR(HardSwish)
 
 HardSwish::HardSwish()
 {
@@ -27,6 +24,8 @@ HardSwish::HardSwish()
 
 int HardSwish::load_param(const ParamDict& pd)
 {
+    // Note that tensorflow/pytorch use alpha,beta = 1/6, 0.5, not the default value here.
+    // You can setup them manually in .param file.
     alpha = pd.get(0, 0.2f);
     beta = pd.get(1, 0.5f);
     lower = -beta / alpha;
@@ -43,15 +42,16 @@ int HardSwish::forward_inplace(Mat& bottom_top_blob, const Option& opt) const
     int size = w * h;
 
     #pragma omp parallel for num_threads(opt.num_threads)
-    for (int q=0; q<channels; q++)
+    for (int q = 0; q < channels; q++)
     {
         float* ptr = bottom_top_blob.channel(q);
 
-        for (int i=0; i<size; i++)
+        for (int i = 0; i < size; i++)
         {
             if (ptr[i] < lower)
                 ptr[i] = 0.f;
-            else if (ptr[i] > upper) ;
+            else if (ptr[i] > upper)
+                ;
             else
                 ptr[i] = ptr[i] * (ptr[i] * alpha + beta);
         }
