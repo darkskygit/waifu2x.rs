@@ -1,6 +1,6 @@
 [package]
 name = "ncnn-sys"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["DarkSky"]
 edition = "2018"
 links = "ncnn"
@@ -9,7 +9,7 @@ description = "just a ncnn rust unsafe binding"
 homepage = "https://github.com/darkskygit/waifu2x.rs"
 repository = "https://github.com/darkskygit/waifu2x.rs"
 keywords = ["binding", "ncnn"]
-exclude = ["ncnn/tools/*", "vulkan/**/*.pdb", "**/.git", ".gitmodules"]
+exclude = ["ncnn/tools/*", "ncnn/glslang/**/*", "vulkan/**/*.pdb", "**/.git", ".gitmodules"]
 readme = "README.md"
 
 [features]
@@ -18,5 +18,5 @@ bundled = []
 
 [build-dependencies]
 cmake = "0.1.45"
-path-absolutize = "3.0.6"
+path-absolutize = "3.0.10"
 fs_extra = "1.2.0"

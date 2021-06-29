@@ -3,6 +3,7 @@ use path_absolutize::Absolutize;
 use std::env;
 use std::fs::create_dir;
 use std::path::PathBuf;
+use std::process::Command;
 
 fn main() {
     let root_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
@@ -24,7 +25,27 @@ fn main() {
         // md build && cd build
         // cmake -DNCNN_VULKAN=ON -DNCNN_BUILD_WITH_STATIC_CRT=ON -DNCNN_ENABLE_LTO=ON -DNCNN_STDIO=OFF -DNCNN_STRING=OFF ..
         // cmake --build . --config MinSizeRel -j 16
-        // cmake --install . --config MinSizeRel  
+        // cmake --install . --config MinSizeRel
+        if !PathBuf::from(&proj_dir.join("ncnn").join("glslang")).exists() {
+            if !Command::new("git")
+                .args([
+                    "clone",
+                    "https://github.com/darkskygit/waifu2x.rs",
+                    "--depth",
+                    "1",
+                    "--single-branch",
+                    "-b",
+                    "glslang",
+                    "glslang",
+                ])
+                .current_dir(proj_dir.join("ncnn"))
+                .status()
+                .unwrap()
+                .success()
+            {
+                panic!("Failed to checkout glslang");
+            }
+        }
         create_dir(&ncnn_dir).unwrap_or_default();
         Config::new("ncnn")
             .generator(if cfg!(windows) {
@@ -106,7 +127,7 @@ fn main() {
         "cargo:rustc-link-search=native={}",
         ncnn.join("lib").display()
     );
-    println!("cargo:rustc-link-lib=static-nobundle={}", "ncnn");
+    println!("cargo:rustc-link-lib=static:-bundle={}", "ncnn");
     println!("cargo:vulkan_dir={}", vulkan_dir.display());
     println!("cargo:vulkan_lib={}", vulkan_dir.join("lib").display());
     println!(
