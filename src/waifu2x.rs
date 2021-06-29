@@ -61,7 +61,7 @@ impl Waifu2x {
     }
     pub fn proc_image(&self, image: DynamicImage, downsampling: bool) -> DynamicImage {
         let image_ptr = std::ptr::null_mut();
-        let mut image_raw = image.to_rgb().into_raw();
+        let mut image_raw = image.to_rgb8().into_raw();
         unsafe {
             let data = proc_image(
                 self.config,
