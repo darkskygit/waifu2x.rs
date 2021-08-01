@@ -14,11 +14,15 @@ readme = "README.md"
 [features]
 default = []
 noise = []
+noise_outside_model = []
 upconv7 = []
+upconv7_outside_model = []
+model_bundled = []
 
 [dependencies]
-libc = "0.2.97"
+libc = "0.2.98"
 ncnn-sys = "0.1.4"
+path-absolutize = "3.0.10"
 
 [dependencies.image]
 version = "0.23.14"

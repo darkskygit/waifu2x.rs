@@ -109,3 +109,85 @@ impl Drop for Waifu2x {
         }
     }
 }
+
+#[no_mangle]
+#[cfg(all(feature = "upconv7_outside_model", feature = "model_bundled"))]
+extern "C" fn get_waifu2x_param(noise: c_int, _scale: c_int, _cunet: Bool) -> *const u8 {
+    match noise {
+        0 => include_bytes!(
+            "../waifu2x/models/models-upconv_7_anime_style_art_rgb/noise0_scale2.0x_model.param.bin"
+        )
+        .as_ptr(),
+        1 => include_bytes!(
+            "../waifu2x/models/models-upconv_7_anime_style_art_rgb/noise1_scale2.0x_model.param.bin"
+        )
+        .as_ptr(),
+        2 => include_bytes!(
+            "../waifu2x/models/models-upconv_7_anime_style_art_rgb/noise2_scale2.0x_model.param.bin"
+        )
+        .as_ptr(),
+        3 => include_bytes!(
+            "../waifu2x/models/models-upconv_7_anime_style_art_rgb/noise3_scale2.0x_model.param.bin"
+        )
+        .as_ptr(),
+        _ => include_bytes!(
+            "../waifu2x/models/models-upconv_7_anime_style_art_rgb/scale2.0x_model.param.bin"
+        )
+        .as_ptr(),
+    }
+}
+
+#[no_mangle]
+#[cfg(all(feature = "upconv7_outside_model", feature = "model_bundled"))]
+extern "C" fn get_waifu2x_model(noise: c_int, _scale: c_int, _cunet: Bool) -> *const u8 {
+    match noise {
+        0 => include_bytes!(
+            "../waifu2x/models/models-upconv_7_anime_style_art_rgb/noise0_scale2.0x_model.bin"
+        )
+        .as_ptr(),
+        1 => include_bytes!(
+            "../waifu2x/models/models-upconv_7_anime_style_art_rgb/noise1_scale2.0x_model.bin"
+        )
+        .as_ptr(),
+        2 => include_bytes!(
+            "../waifu2x/models/models-upconv_7_anime_style_art_rgb/noise2_scale2.0x_model.bin"
+        )
+        .as_ptr(),
+        3 => include_bytes!(
+            "../waifu2x/models/models-upconv_7_anime_style_art_rgb/noise3_scale2.0x_model.bin"
+        )
+        .as_ptr(),
+        _ => include_bytes!(
+            "../waifu2x/models/models-upconv_7_anime_style_art_rgb/scale2.0x_model.bin"
+        )
+        .as_ptr(),
+    }
+}
+
+#[no_mangle]
+#[cfg(all(feature = "noise_outside_model", feature = "model_bundled"))]
+pub extern "C" fn get_waifu2x_param(noise: c_int, scale: c_int, _cunet: Bool) -> *const u8 {
+    match scale {
+        1 => match noise {
+            0 => include_bytes!("../waifu2x/models/models-cunet/noise0_model.param.bin").as_ptr(),
+            1 => include_bytes!("../waifu2x/models/models-cunet/noise1_model.param.bin").as_ptr(),
+            2 => include_bytes!("../waifu2x/models/models-cunet/noise2_model.param.bin").as_ptr(),
+            3 => include_bytes!("../waifu2x/models/models-cunet/noise3_model.param.bin").as_ptr(),
+        },
+        _ => include_bytes!("../waifu2x/models/models-cunet/noise0_model.param.bin").as_ptr(),
+    }
+}
+
+#[no_mangle]
+#[cfg(all(feature = "noise_outside_model", feature = "model_bundled"))]
+pub extern "C" fn get_waifu2x_model(noise: c_int, scale: c_int, _cunet: Bool) -> *const u8 {
+    match scale {
+        1 => match noise {
+            0 => include_bytes!("../waifu2x/models/models-cunet/noise0_model.bin").as_ptr(),
+            1 => include_bytes!("../waifu2x/models/models-cunet/noise1_model.bin").as_ptr(),
+            2 => include_bytes!("../waifu2x/models/models-cunet/noise2_model.bin").as_ptr(),
+            3 => include_bytes!("../waifu2x/models/models-cunet/noise3_model.bin").as_ptr(),
+        },
+        _ => include_bytes!("../waifu2x/models/models-cunet/noise0_model.bin").as_ptr(),
+    }
+}
