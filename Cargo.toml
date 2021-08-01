@@ -22,7 +22,6 @@ model_bundled = []
 [dependencies]
 libc = "0.2.98"
 ncnn-sys = "0.1.4"
-path-absolutize = "3.0.10"
 
 [dependencies.image]
 version = "0.23.14"
@@ -30,3 +29,4 @@ default-features = false
 
 [build-dependencies]
 cmake = "0.1.45"
+path-absolutize = "3.0.10"
