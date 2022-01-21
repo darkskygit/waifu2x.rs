@@ -1,6 +1,6 @@
 [package]
 name = "ncnn-sys"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["DarkSky"]
 edition = "2018"
 links = "ncnn"
@@ -17,6 +17,6 @@ default = ["bundled"]
 bundled = []
 
 [build-dependencies]
-cmake = "0.1.45"
-path-absolutize = "3.0.10"
+cmake = "0.1.48"
+path-absolutize = "3.0.11"
 fs_extra = "1.2.0"
