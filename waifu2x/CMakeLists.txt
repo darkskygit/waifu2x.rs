@@ -4,7 +4,9 @@ cmake_minimum_required(VERSION 3.1)
 
 set(CMAKE_BUILD_TYPE Release)
 
+if(NOT APPLE)
 find_package(OpenMP REQUIRED)
+endif()
 find_package(Vulkan REQUIRED)
 
 find_program(GLSLANGVALIDATOR_EXECUTABLE NAMES glslangValidator PATHS $ENV{VULKAN_SDK}/bin NO_CMAKE_FIND_ROOT_PATH)
@@ -116,6 +118,10 @@ if(MSVC AND CMAKE_BUILD_TYPE MATCHES "MinSizeRel")
     set_target_properties(waifu2x-ncnn-vulkan PROPERTIES LINK_FLAGS "/LTCG")
 endif()
 
+if(APPLE)
+target_link_libraries(waifu2x-ncnn-vulkan ncnn ${Vulkan_LIBRARYS})
+else()
 target_link_libraries(waifu2x-ncnn-vulkan ncnn ${Vulkan_LIBRARYS} ${OpenMP_CXX_LIBRARIES})
+endif()
 
 install(TARGETS waifu2x-ncnn-vulkan ARCHIVE DESTINATION lib)
