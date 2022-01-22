@@ -1,6 +1,2 @@
 [build]
-rustflags = [
-    "-Ctarget-feature=+crt-static",
-    "-Cembed-bitcode=yes",
-    "-Zunstable-options"
-]
+rustflags = ["-Zunstable-options"]

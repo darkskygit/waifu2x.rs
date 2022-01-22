@@ -8,7 +8,9 @@ use std::process::Command;
 fn main() {
     let root_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let proj_dir = root_dir.absolutize().unwrap();
-    let vulkan_dir = proj_dir.join("vulkan");
+    let vulkan_dir = env::var("NCNN_VULKAN_DIR")
+        .and_then(|path| Ok(PathBuf::from(path)))
+        .unwrap_or(proj_dir.join("vulkan"));
     println!("vulkan_dir: {}", vulkan_dir.display());
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     let ncnn_dir = out_dir.join("ncnn");
@@ -26,28 +28,32 @@ fn main() {
         // cmake -DNCNN_VULKAN=ON -DNCNN_BUILD_WITH_STATIC_CRT=ON -DNCNN_ENABLE_LTO=ON -DNCNN_STDIO=OFF -DNCNN_STRING=OFF ..
         // cmake --build . --config MinSizeRel -j 16
         // cmake --install . --config MinSizeRel
-        if !PathBuf::from(&proj_dir.join("ncnn").join("glslang")).exists() {
+        let ncnn_proj_dir = out_dir.join("ncnn_proj");
+        if !ncnn_proj_dir.exists() {
             if !Command::new("git")
                 .args([
                     "clone",
                     "https://github.com/darkskygit/waifu2x.rs",
                     "--depth",
                     "1",
+                    "--recursive",
+                    "-j8",
                     "--single-branch",
                     "-b",
-                    "glslang",
-                    "glslang",
+                    "ncnn",
+                    "ncnn_proj",
                 ])
-                .current_dir(proj_dir.join("ncnn"))
+                .current_dir(out_dir)
                 .status()
                 .unwrap()
                 .success()
             {
-                panic!("Failed to checkout glslang");
+                panic!("Failed to checkout ncnn");
             }
         }
         create_dir(&ncnn_dir).unwrap_or_default();
-        Config::new("ncnn")
+        let mut config = Config::new(ncnn_proj_dir);
+        config
             .generator(if cfg!(windows) {
                 "NMake Makefiles"
             } else {
@@ -120,8 +126,19 @@ fn main() {
             .define("WITH_LAYER_Cast", "OFF")
             .define("WITH_LAYER_HardSigmoid", "OFF")
             .define("WITH_LAYER_SELU", "OFF")
-            .define("WITH_LAYER_HardSwish", "OFF")
-            .build()
+            .define("WITH_LAYER_HardSwish", "OFF");
+        if cfg!(target_os = "macos") && env::var("NCNN_VULKAN_DIR").is_ok() {
+            let molten_vk = vulkan_dir.join("..").join("MoltenVK");
+            config.define("Vulkan_INCLUDE_DIR", molten_vk.join("include"));
+            config.define(
+                "Vulkan_LIBRARY",
+                molten_vk
+                    .join("dylib")
+                    .join("macOS")
+                    .join("libMoltenVK.dylib"),
+            );
+        }
+        config.build()
     };
     println!(
         "cargo:rustc-link-search=native={}",
