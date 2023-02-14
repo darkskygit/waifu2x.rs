@@ -1,4 +1,4 @@
-use image::{imageops::CatmullRom, DynamicImage, GenericImageView, RgbImage};
+use image::{imageops::CatmullRom, DynamicImage, RgbImage};
 use libc::{c_int, c_void};
 
 // for /f %f in ('dir /a/b *.prototxt') do @caffe2ncnn.exe %~nf.prototxt %~nf.json.caffemodel %~nf.param %~nf.bin 256 info.json

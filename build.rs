@@ -40,14 +40,14 @@ fn main() {
             use std::process::Command;
             let path = String::from_utf8(
                 Command::new("brew")
-                    .args(&["--prefix", "libomp"])
+                    .args(["--prefix", "libomp"])
                     .output()
                     .unwrap()
                     .stdout,
             )
             .unwrap();
 
-            let libomp = PathBuf::from(&path.split("\n").next().unwrap()).join("lib");
+            let libomp = PathBuf::from(&path.split('\n').next().unwrap()).join("lib");
             if libomp.exists() {
                 println!("cargo:rustc-link-search=native={}", libomp.display());
             }
@@ -59,36 +59,30 @@ fn main() {
         "cargo:rustc-link-search=native={}",
         waifu2x.join("lib").display()
     );
-    println!(
-        "cargo:rustc-link-lib=static:-bundle={}",
-        "waifu2x-ncnn-vulkan"
-    );
+    println!("cargo:rustc-link-lib=static:-bundle=waifu2x-ncnn-vulkan");
     println!(
         "cargo:rustc-link-search=native={}",
         env::var("DEP_NCNN_LIBRARY").unwrap()
     );
-    println!("cargo:rustc-link-lib=static:-bundle={}", "ncnn");
-    println!(
-        "cargo:rustc-link-lib=static:-bundle={}",
-        "MachineIndependent"
-    );
-    println!("cargo:rustc-link-lib=static:-bundle={}", "SPIRV");
-    println!("cargo:rustc-link-lib=static:-bundle={}", "GenericCodeGen");
-    println!("cargo:rustc-link-lib=static:-bundle={}", "OSDependent");
-    println!("cargo:rustc-link-lib=static:-bundle={}", "OGLCompiler");
+    println!("cargo:rustc-link-lib=static:-bundle=ncnn");
+    println!("cargo:rustc-link-lib=static:-bundle=MachineIndependent");
+    println!("cargo:rustc-link-lib=static:-bundle=SPIRV");
+    println!("cargo:rustc-link-lib=static:-bundle=GenericCodeGen");
+    println!("cargo:rustc-link-lib=static:-bundle=OSDependent");
+    println!("cargo:rustc-link-lib=static:-bundle=OGLCompiler");
     println!(
         "cargo:rustc-link-search=native={}",
         env::var("DEP_NCNN_VULKAN_LIB").unwrap()
     );
     if cfg!(windows) {
-        println!("cargo:rustc-link-lib=static={}", "vulkan-1");
+        println!("cargo:rustc-link-lib=static=vulkan-1");
     } else {
         if cfg!(target_os = "macos") {
-            println!("cargo:rustc-link-lib={}", "omp");
+            println!("cargo:rustc-link-lib=omp");
         } else {
-            println!("cargo:rustc-link-lib=static={}", "gomp");
-            println!("cargo:rustc-link-lib=static={}", "stdc++");
+            println!("cargo:rustc-link-lib=static=gomp");
+            println!("cargo:rustc-link-lib=static=stdc++");
         }
-        println!("cargo:rustc-link-lib=dylib={}", "vulkan");
+        println!("cargo:rustc-link-lib=dylib=vulkan");
     }
 }

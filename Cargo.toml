@@ -1,8 +1,8 @@
 [package]
 name = "waifu2x"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["DarkSky"]
-edition = "2018"
+edition = "2021"
 links = "waifu2x"
 description = "A waifu2x-ncnn-vulkan Rust binding"
 license = "AGPL-3.0-or-later"
