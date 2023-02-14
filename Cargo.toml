@@ -21,13 +21,13 @@ upconv7_outside_model = []
 model_bundled = []
 
 [dependencies]
-libc = "^0.2.113"
-ncnn-sys = "^0.1.7"
+libc = "0.2.139"
+ncnn-sys = "0.2.0"
 
 [dependencies.image]
-version = "0.24.1"
+version = "0.24.5"
 default-features = false
 
 [build-dependencies]
-cmake = "^0.1.48"
-path-absolutize = "3.0.11"
+cmake = "0.1.49"
+path-absolutize = "3.0.14"
