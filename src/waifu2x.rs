@@ -4,6 +4,17 @@ use libc::{c_int, c_void};
 // for /f %f in ('dir /a/b *.prototxt') do @caffe2ncnn.exe %~nf.prototxt %~nf.json.caffemodel %~nf.param %~nf.bin 256 info.json
 // for /f %f in ('dir /a/b *.param') do @ncnn2mem %~nf.param %~nf.bin %~nf.id.h %~nf.mem.h
 
+#[allow(clippy::enum_variant_names)]
+#[derive(Debug, thiserror::Error)]
+pub enum Waifu2xError {
+    #[error("invalid noise level `{0}`; valid levels are -1,0,1,2,3")]
+    InvalidNoise(i8),
+    #[error("invalid scale `{0}`; valid scales are 1,2,4,8,16,32")]
+    InvalidScale(u8),
+    #[error("invalid gpuid `{0}`")]
+    InvalidGpuId(u8),
+}
+
 #[repr(u8)]
 enum Bool {
     False = 0,
@@ -14,7 +25,7 @@ extern "C" {
     fn init_ncnn();
     fn init_config(noise: c_int, scale: c_int, tilesize: c_int, is_cunet: Bool) -> *mut c_void;
     fn init_waifu2x(config: *mut c_void, gpuid: c_int) -> *mut c_void;
-    fn get_gpu_count(processer: *mut c_void) -> c_int;
+    fn get_gpu_count() -> c_int;
     fn proc_image(
         config: *mut c_void,
         processer: *mut c_void,
@@ -40,7 +51,32 @@ impl Waifu2x {
     pub fn init() {
         unsafe { init_ncnn() }
     }
-    pub fn new(gpuid: u8, noise: u8, scale: u8, tilesize: u16, is_cunet: bool) -> Self {
+
+    pub fn new(
+        gpuid: u8,
+        noise: i8,
+        scale: u8,
+        tilesize: u16,
+        is_cunet: bool,
+    ) -> Result<Self, Waifu2xError> {
+        // valid noise values: -1,0,1,2,3
+        if !(-1..=3).contains(&noise) {
+            return Err(Waifu2xError::InvalidNoise(noise));
+        }
+
+        // check if scale is 0, is not power of 2, or more than 32
+        // valid values are: 1,2,4,8,16,32
+        if scale == 0 || scale & (scale - 1) != 0 || scale > 32 {
+            return Err(Waifu2xError::InvalidScale(scale));
+        }
+
+        // check whether gpuid is valid or not
+        let gpu_count = Self::get_gpu_count();
+        // valid values: 0..gpu_count
+        if !(0..gpu_count).contains(&gpuid.into()) {
+            return Err(Waifu2xError::InvalidGpuId(gpuid));
+        }
+
         unsafe {
             let config = init_config(
                 i32::from(noise),
@@ -48,17 +84,21 @@ impl Waifu2x {
                 i32::from(tilesize),
                 if is_cunet { Bool::True } else { Bool::False },
             );
+
             let waifu2x = init_waifu2x(config, i32::from(gpuid));
-            Self {
+
+            Ok(Self {
                 config,
                 waifu2x,
                 scale,
-            }
+            })
         }
     }
-    pub fn get_gpu_count(&self) -> i32 {
-        unsafe { get_gpu_count(self.waifu2x) }
+
+    pub fn get_gpu_count() -> i32 {
+        unsafe { get_gpu_count() }
     }
+
     pub fn proc_image(&self, image: DynamicImage, downsampling: bool) -> DynamicImage {
         let image_ptr = std::ptr::null_mut();
         let mut image_raw = image.to_rgb8().into_raw();
