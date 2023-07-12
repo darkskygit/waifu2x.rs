@@ -39,10 +39,12 @@ extern "C" {
     fn free_waifu2x(config: *mut c_void, processer: *mut c_void);
 }
 
+#[derive(Debug)]
 pub struct Waifu2x {
     config: *mut c_void,
     waifu2x: *mut c_void,
     scale: u8,
+    runs: u8,
 }
 
 unsafe impl Send for Waifu2x {}
@@ -80,7 +82,8 @@ impl Waifu2x {
         unsafe {
             let config = init_config(
                 i32::from(noise),
-                i32::from(scale),
+                // this always scales by 2 at a time
+                2,
                 i32::from(tilesize),
                 if is_cunet { Bool::True } else { Bool::False },
             );
@@ -91,6 +94,10 @@ impl Waifu2x {
                 config,
                 waifu2x,
                 scale,
+                // calculate how many process image runs we need to get to the scale
+                // every power of 2 yields +1
+                // 1x = 0, 2x = 1, 4x = 2, 8x = 3, 16x = 4, 32x = 5
+                runs: scale.ilog2() as u8,
             })
         }
     }
@@ -100,10 +107,32 @@ impl Waifu2x {
     }
 
     pub fn proc_image(&self, image: DynamicImage, downsampling: bool) -> DynamicImage {
+        let width = image.width();
+        let height = image.height();
+
+        let mut image = self.proc_image_iter(image);
+
+        if self.scale == 1 {
+            // run scaling once and resize back to original size
+            image = image.resize(width, height, CatmullRom);
+        } else {
+            for _ in 0..self.runs.saturating_sub(1) {
+                image = self.proc_image_iter(image);
+            }
+
+            if downsampling {
+                image = image.resize(width, height, CatmullRom);
+            }
+        }
+
+        image
+    }
+
+    fn proc_image_iter(&self, image: DynamicImage) -> DynamicImage {
         let image_ptr = std::ptr::null_mut();
         let mut image_raw = image.to_rgb8().into_raw();
-        unsafe {
-            let data = proc_image(
+        let data = unsafe {
+            proc_image(
                 self.config,
                 self.waifu2x,
                 image_raw.as_mut_ptr() as *mut c_void,
@@ -111,34 +140,32 @@ impl Waifu2x {
                 image.height() as i32,
                 3,
                 &image_ptr,
-            );
-            let image = if let Some(new_image) = RgbImage::from_raw(
-                image.width() * u32::from(self.scale),
-                image.height() * u32::from(self.scale),
+            )
+        };
+
+        let image = if let Some(new_image) = RgbImage::from_raw(
+            image.width() * 2,
+            image.height() * 2,
+            unsafe {
                 std::slice::from_raw_parts(
                     data as *const u8,
-                    (image.width()
-                        * u32::from(self.scale)
-                        * image.height()
-                        * u32::from(self.scale)
-                        * 3) as usize,
+                    (image.width() * 2 * image.height() * 2 * 3) as usize,
                 )
-                .to_vec(),
-            ) {
-                let new_image = DynamicImage::ImageRgb8(new_image);
-                if downsampling && self.scale > 1 {
-                    new_image.resize(image.width(), image.height(), CatmullRom)
-                } else {
-                    new_image
-                }
-            } else {
-                DynamicImage::ImageRgb8(
-                    RgbImage::from_raw(image.width(), image.height(), image_raw).unwrap(),
-                )
-            };
+            }
+            .to_vec(),
+        ) {
+            DynamicImage::ImageRgb8(new_image)
+        } else {
+            DynamicImage::ImageRgb8(
+                RgbImage::from_raw(image.width(), image.height(), image_raw).unwrap(),
+            )
+        };
+
+        unsafe {
             free_image(image_ptr);
-            image
         }
+
+        image
     }
 }
 
