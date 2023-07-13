@@ -7,8 +7,8 @@ use libc::{c_int, c_void};
 #[allow(clippy::enum_variant_names)]
 #[derive(Debug, thiserror::Error)]
 pub enum Waifu2xError {
-    #[error("invalid noise level `{0}`; valid levels are -1,0,1,2,3")]
-    InvalidNoise(i8),
+    #[error("invalid noise level `{0}`; valid levels are 0,1,2,3")]
+    InvalidNoise(u8),
     #[error("invalid scale `{0}`; valid scales are 1,2,4,8,16,32")]
     InvalidScale(u8),
     #[error("invalid gpuid `{0}`")]
@@ -58,13 +58,13 @@ impl Waifu2x {
 
     pub fn new(
         gpuid: u8,
-        noise: i8,
+        noise: u8,
         scale: u8,
         tilesize: u16,
         is_cunet: bool,
     ) -> Result<Self, Waifu2xError> {
-        // valid noise values: -1,0,1,2,3
-        if !(-1..=3).contains(&noise) {
+        // valid noise values: 0,1,2,3
+        if !(0..=3).contains(&noise) {
             return Err(Waifu2xError::InvalidNoise(noise));
         }
 
@@ -81,11 +81,19 @@ impl Waifu2x {
             return Err(Waifu2xError::InvalidGpuId(gpuid));
         }
 
+        // every power of 2 yields +1
+        // 1x = 0, 2x = 1, 4x = 2, 8x = 3, 16x = 4, 32x = 5
+        // since 1 run is already assumed, we remove 1 so
+        // 4x = 1, 8x = 2, etc
+        let runs = scale.ilog2().saturating_sub(1) as u8;
+        // internal scaling resolution used
+        // after we get the number of runs, leave at 1 or use a max of 2 if scale was > 2
+        let scale = scale.clamp(1, 2);
+
         unsafe {
             let config = init_config(
                 i32::from(noise),
-                // this always scales by 2 at a time
-                2,
+                i32::from(scale),
                 i32::from(tilesize),
                 if is_cunet { Bool::True } else { Bool::False },
             );
@@ -96,11 +104,7 @@ impl Waifu2x {
                 config,
                 waifu2x,
                 scale,
-                // every power of 2 yields +1
-                // 1x = 0, 2x = 1, 4x = 2, 8x = 3, 16x = 4, 32x = 5
-                // since 1 run is already assumed, we remove 1 so
-                // 4x = 1, 8x = 2, etc
-                runs: scale.ilog2().saturating_sub(1) as u8,
+                runs,
             })
         }
     }
@@ -147,12 +151,13 @@ impl Waifu2x {
         };
 
         let image = if let Some(new_image) = RgbaImage::from_raw(
-            image.width() * 2,
-            image.height() * 2,
+            image.width() * self.scale as u32,
+            image.height() * self.scale as u32,
             unsafe {
                 std::slice::from_raw_parts(
                     data as *const u8,
-                    (image.width() * 2 * image.height() * 2 * 4) as usize,
+                    (image.width() * self.scale as u32 * image.height() * self.scale as u32 * 4)
+                        as usize,
                 )
             }
             .to_vec(),
