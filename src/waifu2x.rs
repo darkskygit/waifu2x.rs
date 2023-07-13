@@ -1,4 +1,4 @@
-use image::{imageops::CatmullRom, DynamicImage, RgbImage};
+use image::{imageops::CatmullRom, DynamicImage, RgbaImage};
 use libc::{c_int, c_void};
 
 // for /f %f in ('dir /a/b *.prototxt') do @caffe2ncnn.exe %~nf.prototxt %~nf.json.caffemodel %~nf.param %~nf.bin 256 info.json
@@ -44,6 +44,8 @@ pub struct Waifu2x {
     config: *mut c_void,
     waifu2x: *mut c_void,
     scale: u8,
+    // calculate how many additional process image runs
+    // after the initial run we need to get to the desired scale
     runs: u8,
 }
 
@@ -94,10 +96,11 @@ impl Waifu2x {
                 config,
                 waifu2x,
                 scale,
-                // calculate how many process image runs we need to get to the scale
                 // every power of 2 yields +1
                 // 1x = 0, 2x = 1, 4x = 2, 8x = 3, 16x = 4, 32x = 5
-                runs: scale.ilog2() as u8,
+                // since 1 run is already assumed, we remove 1 so
+                // 4x = 1, 8x = 2, etc
+                runs: scale.ilog2().saturating_sub(1) as u8,
             })
         }
     }
@@ -116,7 +119,7 @@ impl Waifu2x {
             // run scaling once and resize back to original size
             image = image.resize(width, height, CatmullRom);
         } else {
-            for _ in 0..self.runs.saturating_sub(1) {
+            for _ in 0..self.runs {
                 image = self.proc_image_iter(image);
             }
 
@@ -130,7 +133,7 @@ impl Waifu2x {
 
     fn proc_image_iter(&self, image: DynamicImage) -> DynamicImage {
         let image_ptr = std::ptr::null_mut();
-        let mut image_raw = image.to_rgb8().into_raw();
+        let mut image_raw = image.to_rgba8().into_raw();
         let data = unsafe {
             proc_image(
                 self.config,
@@ -138,26 +141,26 @@ impl Waifu2x {
                 image_raw.as_mut_ptr() as *mut c_void,
                 image.width() as i32,
                 image.height() as i32,
-                3,
+                4,
                 &image_ptr,
             )
         };
 
-        let image = if let Some(new_image) = RgbImage::from_raw(
+        let image = if let Some(new_image) = RgbaImage::from_raw(
             image.width() * 2,
             image.height() * 2,
             unsafe {
                 std::slice::from_raw_parts(
                     data as *const u8,
-                    (image.width() * 2 * image.height() * 2 * 3) as usize,
+                    (image.width() * 2 * image.height() * 2 * 4) as usize,
                 )
             }
             .to_vec(),
         ) {
-            DynamicImage::ImageRgb8(new_image)
+            DynamicImage::ImageRgba8(new_image)
         } else {
-            DynamicImage::ImageRgb8(
-                RgbImage::from_raw(image.width(), image.height(), image_raw).unwrap(),
+            DynamicImage::ImageRgba8(
+                RgbaImage::from_raw(image.width(), image.height(), image_raw).unwrap(),
             )
         };
 
