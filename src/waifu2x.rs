@@ -119,10 +119,7 @@ impl Waifu2x {
 
         let mut image = self.proc_image_iter(image);
 
-        if self.scale == 1 {
-            // run scaling once and resize back to original size
-            image = image.resize(width, height, CatmullRom);
-        } else {
+        if self.scale > 1 {
             for _ in 0..self.runs {
                 image = self.proc_image_iter(image);
             }
