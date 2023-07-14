@@ -1,4 +1,0 @@
-[submodule "waifu2x/models"]
-	path = waifu2x/models
-	url = https://github.com/darkskygit/waifu2x.rs
-	branch = models
