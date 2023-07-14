@@ -463,8 +463,8 @@ extern "C" waifu2x * init_waifu2x(waifu2x_config * config, int gpuid)
 	return processer;
 }
 
-extern "C" int get_gpu_count(waifu2x * processer) {
-	return processer->gpu_count;
+extern "C" int get_gpu_count() {
+	return ncnn::get_gpu_count();
 }
 
 extern "C" void* proc_image(waifu2x_config * config, waifu2x * processer, unsigned char* data, int w, int h, int c, waifu2x_image * &image)

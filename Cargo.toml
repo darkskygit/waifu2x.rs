@@ -23,6 +23,7 @@ model_bundled = []
 [dependencies]
 libc = "0.2.139"
 ncnn-sys = "0.2.0"
+thiserror = "1.0.40"
 
 [dependencies.image]
 version = "0.24.5"
