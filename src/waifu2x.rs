@@ -263,3 +263,44 @@ pub extern "C" fn get_waifu2x_model(noise: c_int, scale: c_int, _cunet: Bool) ->
         _ => include_bytes!("../waifu2x/models/models-cunet/noise0_model.bin").as_ptr(),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Waifu2x;
+
+    #[test]
+    fn test_noise_0_scale_2x() {
+        let waifu2x = Waifu2x::new(0, 0, 2, 128, true).unwrap();
+        let image = image::open("tests/test.png").unwrap();
+        let image = waifu2x.proc_image(image, false);
+        let ret = image::open("tests/test_noise_0_scale_2x.png").unwrap();
+        assert_eq!(image, ret);
+    }
+
+    #[test]
+    fn test_noise_1_scale_2x() {
+        let waifu2x = Waifu2x::new(0, 1, 2, 128, true).unwrap();
+        let image = image::open("tests/test.png").unwrap();
+        let image = waifu2x.proc_image(image, false);
+        let ret = image::open("tests/test_noise_1_scale_2x.png").unwrap();
+        assert_eq!(image, ret);
+    }
+
+    #[test]
+    fn test_noise_2_scale_2x() {
+        let waifu2x = Waifu2x::new(0, 2, 2, 128, true).unwrap();
+        let image = image::open("tests/test.png").unwrap();
+        let image = waifu2x.proc_image(image, false);
+        let ret = image::open("tests/test_noise_2_scale_2x.png").unwrap();
+        assert_eq!(image, ret);
+    }
+
+    #[test]
+    fn test_noise_3_scale_2x() {
+        let waifu2x = Waifu2x::new(0, 3, 2, 128, true).unwrap();
+        let image = image::open("tests/test.png").unwrap();
+        let image = waifu2x.proc_image(image, false);
+        let ret = image::open("tests/test_noise_3_scale_2x.png").unwrap();
+        assert_eq!(image, ret);
+    }
+}

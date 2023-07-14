@@ -79,6 +79,7 @@ fn main() {
     } else {
         if cfg!(target_os = "macos") {
             println!("cargo:rustc-link-lib=omp");
+            println!("cargo:rustc-link-lib=c++");
         } else {
             println!("cargo:rustc-link-lib=static=gomp");
             println!("cargo:rustc-link-lib=static=stdc++");
