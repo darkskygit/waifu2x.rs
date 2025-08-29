@@ -1,6 +1,6 @@
 [package]
 name = "waifu2x"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["DarkSky"]
 edition = "2021"
 links = "waifu2x"
@@ -21,14 +21,14 @@ upconv7_outside_model = []
 model_bundled = []
 
 [dependencies]
-image = { version = "0.24.6", default-features = false }
-libc = "0.2.146"
+image = { version = "0.25.6", default-features = false }
+libc = "0.2.175"
 ncnn-sys = "0.2.0"
-thiserror = "1.0.40"
+thiserror = "1.0.69"
 
 [build-dependencies]
-cmake = "0.1.50"
-path-absolutize = "3.0.14"
+cmake = "0.1.54"
+path-absolutize = "3.1.1"
 
 [dev-dependencies]
-image = { version = "0.24.6", default-features = false, features = ["png"] }
+image = { version = "0.25.6", default-features = false, features = ["png"] }
